@@ -177,7 +177,6 @@ external cpShapeGetType: shape:cpShape -> cpShapeType = "ml_cpShapeGetType"
 
 (** Debug *)
 external cpSpaceDump: space:cpSpace -> unit = "ml_cpSpaceDump"
-external cpShapeDump: shape:cpShape -> unit = "ml_cpShapeDump"
 external cpBodyDump: body:cpBody -> unit = "ml_cpBodyDump"
 
 (** Chipmunk Bounding Box *)
@@ -681,6 +680,8 @@ module OO :
     *)
         method set_damping : damping:float -> unit
     (** The amount of damping to apply to the system when updating. *)
+        method set_elastic_iterations : elasticIterations:int -> unit
+    (** Number of iterations to use in the impulse solver to solve elastic collisions. *)
         method set_gravity : gravity:Low_level.cpVect -> unit
     (** The amount of gravity in the system. *)
         method set_iterations : iterations:int -> unit
@@ -827,9 +828,6 @@ class cp_body ~m ~i =
 
     method free = cpBodyFree body
 
-    method set_mass           = cpBodySetMass ~body
-    method set_moment         = cpBodySetMoment ~body
-    method set_angle          = cpBodySetAngle ~body
     method slew               = cpBodySlew ~body
     method update_velocity    = cpBodyUpdateVelocity ~body
     method update_position    = cpBodyUpdatePosition ~body
@@ -879,18 +877,15 @@ let to_cp_body ~body =
 
     method free = cpBodyFree body
 
-    method set_mass = cpBodySetMass ~body
-    method set_moment = cpBodySetMoment ~body
-    method set_angle = cpBodySetAngle ~body
-    method slew = cpBodySlew ~body
-    method update_velocity = cpBodyUpdateVelocity ~body
-    method update_position = cpBodyUpdatePosition ~body
-    method local2world = cpBodyLocal2World ~body
-    method world2local = cpBodyWorld2Local ~body
-    method apply_impulse = cpBodyApplyImpulse ~body
+    method slew               = cpBodySlew ~body
+    method update_velocity    = cpBodyUpdateVelocity ~body
+    method update_position    = cpBodyUpdatePosition ~body
+    method local2world        = cpBodyLocal2World ~body
+    method world2local        = cpBodyWorld2Local ~body
+    method apply_impulse      = cpBodyApplyImpulse ~body
     method apply_bias_impulse = cpBodyApplyBiasImpulse ~body
-    method reset_forces = cpBodyResetForces ~body
-    method apply_force = cpBodyApplyForce ~body
+    method reset_forces       = cpBodyResetForces ~body
+    method apply_force        = cpBodyApplyForce ~body
 
     method set_mass           = cpBodySetMass ~body
     method set_mass_inverse   = cpBodySetMassInverse ~body
@@ -941,7 +936,6 @@ class cp_pin_joint ~joint =
     method set_vect    = cpPinJointSetVect ~pin_joint
     method set_n_mass  = cpPinJointSetNMass ~pin_joint
     method set_j_n_acc = cpPinJointSetJNAcc ~pin_joint
-    method set_j_n_acc = cpPinJointSetJNAcc ~pin_joint
     method set_bias    = cpPinJointSetBias ~pin_joint
 
     method get_anchor1 = cpPinJointGetAnchor1 ~pin_joint
@@ -951,7 +945,6 @@ class cp_pin_joint ~joint =
     method get_r2      = cpPinJointGetR2 ~pin_joint
     method get_vect    = cpPinJointGetVect ~pin_joint
     method get_n_mass  = cpPinJointGetNMass ~pin_joint
-    method get_j_n_acc = cpPinJointGetJNAcc ~pin_joint
     method get_j_n_acc = cpPinJointGetJNAcc ~pin_joint
     method get_bias    = cpPinJointGetBias ~pin_joint
   end
@@ -1362,6 +1355,9 @@ class cp_space =
     method get_iterations = cpSpaceGetIterations ~space
     method set_iterations = cpSpaceSetIterations ~space
     (** The number of iterations to use when solving constraints. (collisions and joints) *)
+
+    method set_elastic_iterations = cpSpaceSetElasticIterations ~space
+    (** Number of iterations to use in the impulse solver to solve elastic collisions. *)
 
     method get_gravity    = cpSpaceGetGravity ~space
     method set_gravity    = cpSpaceSetGravity ~space

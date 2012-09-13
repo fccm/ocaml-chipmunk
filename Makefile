@@ -18,7 +18,7 @@
 #
 # }}}
 
-all: chipmunk.cma
+all: chipmunk.cma chipmunk.cmxa
 
 
 # generated parts
@@ -57,29 +57,37 @@ dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o
 	    -L/usr/local/lib  \
 	    -o  _chipmunk_stubs  $<  \
 	    -ccopt -O3  -ccopt -std=gnu99  -ccopt -ffast-math  \
-	    -lchipmunk -lchipmunk_static
+	    -lchipmunk
+#	    -lchipmunk_static
 #	    -L../src   -lchipmunk -lchipmunk_static
 #	    -ccopt -g  -ccopt -O0  \
 
-#%.cmi: %.mli
-#	ocamlc -c $<
 
-#%.cmo: %.ml  %.cmi
-#	ocamlc -c $<
+#  Makes use of a minimal preprocessor for OCaml source files.
+#  It is similar to cpp, but this replacement for cpp is because
+#  cpp versions in different environments may have different
+#  behaviour with unexpected reactions which will break OCaml code.
 
-#chipmunk_oo.mli: chipmunk_oo.ml
-#	ocamlc -pp cpp -i $< > $@
+MLPP=./mlpp.exe
+
+$(MLPP): mlpp.ml
+	ocamlopt str.cmxa $< -o $@
+
+clean-mlpp:
+	rm -f $(MLPP)
+
+
 
 # generate oo sig
 oo: oo.mli
 oo.mli: chipmunk.ml
 	ocamlc -i $< > $@
 
-chipmunk.ml: chipmunk.ml.cpp  chipmunk.gen.ml
-	cpp -C $<  > $@
+chipmunk.ml: chipmunk.ml.pp  chipmunk.gen.ml  $(MLPP)
+	$(MLPP) $<  > $@
 
-chipmunk.mli: chipmunk.ml.cpp  chipmunk.gen.ml
-	cpp -DMLI -C $<  > $@
+chipmunk.mli: chipmunk.ml.pp  chipmunk.gen.ml  $(MLPP)
+	$(MLPP) -D MLI -C $<  > $@
 	sed -i $@  -e 's/= struct/: sig/g'
 
 chipmunk.cmi: chipmunk.mli
@@ -96,7 +104,8 @@ chipmunk.cma:  chipmunk.cmo  dll_chipmunk_stubs.so
 	       -ccopt -L/usr/local/lib  \
 	       -dllib dll_chipmunk_stubs.so  \
 	      -cclib -l_chipmunk_stubs  \
-	      -cclib -lchipmunk  -cclib -lchipmunk_static
+	      -cclib -lchipmunk 
+#	      -cclib -lchipmunk_static
 
 # native
 chipmunk.cmx: chipmunk.ml chipmunk.cmi
@@ -108,7 +117,8 @@ chipmunk.cmxa  chipmunk.a:  chipmunk.cmx  dll_chipmunk_stubs.so
 	  -ccopt -O3  -ccopt -std=gnu99  -ccopt -ffast-math  \
 	  -ccopt -L/usr/local/  \
 	  -ccopt -L/usr/local/lib  \
-	      -cclib -lchipmunk  -cclib -lchipmunk_static
+	      -cclib -lchipmunk
+#	      -cclib -lchipmunk_static
 #	  -ccopt -L../src  \
 
 .PHONY: clean-doc clean run-opt-demo test install
@@ -157,6 +167,7 @@ DIST_FILES=\
     chipmunk.a         \
     chipmunk.cmi       \
     chipmunk.cma       \
+    chipmunk.cmx       \
     chipmunk.cmxa      \
     lib_chipmunk_stubs.a
 
@@ -201,11 +212,11 @@ LICENCE_GPL.txt:
 	wget http://www.gnu.org/licenses/gpl-3.0.txt
 	mv gpl-3.0.txt $@
 
-CP_FILES= chipmunk.ml.cpp  wrap_chipmunk.c  \
+CP_FILES= chipmunk.ml.pp  wrap_chipmunk.c  \
           Makefile  META  README.txt  \
           generate_structs.ml gen_structs.h \
           generate_funcs.ml   gen_funcs.h \
-          .style.css
+          mlpp.ml  .style.css
 
 DM_FILES= demos/moon_buggy.ml \
           demos/demo_dist.ml

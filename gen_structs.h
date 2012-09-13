@@ -25,6 +25,8 @@ cpSpace space {
         Gravity( cpVect gravity ),
         Damping( float damping ),
 
+        ElasticIterations( int elasticIterations ),
+
         Stamp( int_readonly stamp ),
 
 //      Bodies( cpArray bodies ),
@@ -204,7 +206,7 @@ cpArbiter arbiter {
 
 // Calculated by cpArbiterPreStep().
         U( cpFloat u ),
-        E( cpFloat e ),
+//      E( cpFloat e ),
         TargetV( cpVect target_v ),
 
 // Time stamp of the arbiter. (from cpSpace)

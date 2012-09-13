@@ -192,31 +192,6 @@ char * get_cpShape_type( cpShapeType type )
     return types[i];
 }
 
-
-void dump_cpShape( cpShape *shape )
-{
-    printf("cpShape {\n");
-    printf("  id: %d\n", shape->id );
-    printf("  type: %u %s\n", shape->type, get_cpShape_type(shape->type) );
-    printf("  collision_type: %u\n", shape->collision_type );
-    printf("  group: %u\n", shape->group );
-    printf("  layers: %u\n", shape->layers );
-    printf("  elasticity: %g\n", shape->e );
-    printf("  friction: %g\n", shape->u );
-    printf("  surface_v: %g %g\n", shape->surface_v.x, shape->surface_v.y );
-    if ( shape->body ) dump_cpBody( shape->body );
-    else printf("  body: None\n");
-    printf("}\n");
-    fflush(stdout);
-}
-
-CAMLprim value
-ml_cpShapeDump( value shape )
-{
-    dump_cpShape( (cpShape *)shape );
-    return Val_unit;
-}
-
 void dump_cpSpace( cpSpace *space )
 {
     printf("cpSpace {\n");
@@ -326,7 +301,7 @@ CAMLprim value
 ml_cpShapeGetType(value shape)
 {
     int i=0;  // wrong default
-    switch (((cpShape *)shape)->type)
+    switch ((((cpShape *)shape)->klass)->type)
     {
         case CP_CIRCLE_SHAPE:  i = 0; break;
         case CP_SEGMENT_SHAPE: i = 1; break;
