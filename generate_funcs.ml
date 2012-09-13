@@ -114,6 +114,12 @@ let prepare_arg ((arg_type, pointer), arg_name) =
         from_ml= arg_name;
         at_call= Printf.sprintf "Double_val(%s)" arg_name;
         prev_conv= "" }
+  | "string", "" ->
+      { arg_name= arg_name ^":";
+        ml_type= "string";
+        from_ml= arg_name;
+        at_call= Printf.sprintf "String_val(%s)" arg_name;
+        prev_conv= "" }
   | "cpSpace", "*"
   | "cpBody", "*"
   | "cpShape", "*"
@@ -190,6 +196,8 @@ let get_c_return func_type =
       ("", "int _ret = ", "return Val_long(_ret);")
   | "cpFloat" ->
       ("", "cpFloat _ret = ", "return caml_copy_double(_ret);")
+  | "cpBody" ->
+      ("", "cpBody _ret = ", "return Val_cpBody(_ret);")
   | "cpVect" ->
       let mem_gc = Printf.sprintf "
     CAMLparam0();
@@ -213,11 +221,12 @@ let get_c_return func_type =
 let get_ml_return func_type =
   match func_type with
   | "void" -> ("unit")
-  | "cpConstraint *" -> ("cpConstraint")
-  | "cpVect" -> ("cpVect")
+  | "int" -> ("int")
   | "cpBool" -> ("bool")
   | "cpFloat" -> ("float")
-  | "int" -> ("int")
+  | "cpVect" -> ("cpVect")
+  | "cpBody *" -> ("cpBody")
+  | "cpConstraint *" -> ("cpConstraint")
   | _ ->
       failwith(Printf.sprintf "ML return type TODO: '%s'" func_type)
 ;;
@@ -242,7 +251,7 @@ let print_ml_func (func_type, func_name) argv_t =
   and bc_call =
     if len <= 5 then "" else (Printf.sprintf " \"ml_%s_bc\"" func_name)
   in
-  Printf.printf "\nexternal %s: %s %s" func_name ml_func_type ml_return;
+  Printf.printf "\nexternal %s :%s %s" func_name ml_func_type ml_return;
   Printf.printf " =%s \"ml_%s\"" bc_call func_name;
   print_newline();
 ;;

@@ -1,35 +1,8 @@
 
-cpBody body {
-        MassInverse( float m_inv ),
-        MomentInverse( float i_inv ),
-
-        VelLim( float v_limit ),
-        AngVelLim( float w_limit ),
-};
-
-
-//cpSpace space {
-//      Bodies( cpArray bodies ),
-//};
-
-
-cpShape shape {
-        Elasticity( float e ),
-        Friction( float u ),
-        SurfaceV( cpVect surface_v ),
-
-// User defined collision type for the shape.
-        CollisionType( int collision_type ),
-// User defined collision group for the shape.
-        Group( int group ),
-// User defined layer bitmask for the shape.
-        Layers( int layers ),
-};
-
 
 cpCircleShape circle_shape {
+        Radius( cpFloat r ),
         Center( cpVect c ),
-        Radius( float r ),
 };
 
 
@@ -58,6 +31,15 @@ cpPolyShape poly {
         TVerts( cpVectArray tVerts ),
 //      cpPolyShapeAxis *tAxes;
 };
+
+
+
+cpConstraint constr {
+        MaxForce( cpFloat maxForce ),
+        ErrorBias( cpFloat errorBias ),
+        MaxBias( cpFloat maxBias ),
+};
+
 
 
 cpPinJoint pin_joint {

@@ -25,6 +25,7 @@
 }}} */
 
 //define CP_USE_DEPRECATED_API_4 1
+//define CP_ALLOW_PRIVATE_ACCESS 1
 #include <chipmunk/chipmunk.h>
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -115,6 +116,23 @@ ml_cpBodyNew( value m, value i )
 {
     cpBody *body = cpBodyNew( Double_val(m), Double_val(i) );
     return Val_cpBody(body);
+}
+
+CAMLprim value
+ml_cpBodyGetUserData(value body)
+{
+    cpDataPointer d = cpBodyGetUserData(cpBody_val(body));
+    int r = (int) d;
+    return Val_int(r);
+}
+
+CAMLprim value
+ml_cpBodySetUserData(value body, value mlv)
+{
+    int d = Int_val(mlv);
+    cpDataPointer dp = (cpDataPointer) d;
+    cpBodySetUserData(cpBody_val(body), dp);
+    return Val_unit;
 }
 
 // }}}
@@ -211,7 +229,7 @@ ml_cpSegmentShapeNew( value body, value ml_a, value ml_b, value r )
 
     cpShape* shape = cpSegmentShapeNew( cpBody_val(body), a, b, Double_val(r) );
 
-    CAMLreturn( (value)shape );
+    CAMLreturn( Val_cpShape(shape) );
 }
 
 
@@ -232,7 +250,7 @@ ml_cpPolyShapeNew( value body, value ml_verts, value ml_offset )
     offset.y = Double_field(ml_offset,1);
 
     cpShape *shape = cpPolyShapeNew( cpBody_val(body), numVerts, verts, offset );
-    return (value) shape;
+    return Val_cpShape(shape);
 }
 
 
@@ -244,33 +262,35 @@ ml_cpCircleShapeNew( value body, value radius, value ml_offset )
     offset.y = Double_field(ml_offset,1);
 
     cpShape *shape = cpCircleShapeNew( cpBody_val(body), Double_val(radius), offset );
-    return (value) shape;
+    return Val_cpShape(shape);
 }
 
 
 CAMLprim value
-ml_cpShapeGetBody(value shape)
+ml_cpBoxShapeNew( value body, value width, value height )
+{
+    cpShape *shape = cpBoxShapeNew( cpBody_val(body), Double_val(width), Double_val(height) );
+    return Val_cpShape(shape);
+}
+
+
+CAMLprim value
+ml_cpShapeGetBody( value shape )
 {
     CAMLparam1(shape);
 
-    cpShape * shape_p;
-    cpBody * body_p;
+    cpBody *body = cpShapeGetBody( cpShape_val(shape) );
 
-    shape_p = (cpShape *) shape;
-
-    body_p = shape_p->body;
-
-    if (body_p == NULL)
+    if (body == NULL)
         caml_failwith("No Body set");
 
-    CAMLreturn( (value) body_p );
+    CAMLreturn( Val_cpBody(body) );
 }
 
-
 CAMLprim value
-ml_cpShapeSetBody(value shape, value body)
+ml_cpShapeSetBody( value shape, value body )
 {
-        ((cpShape *)shape)->body = (cpBody *) body;
+        cpShapeSetBody( cpShape_val(shape), cpBody_val(body) );
         return Val_unit;
 }
 
@@ -281,26 +301,109 @@ static const cpShapeType shape_type_table[] = {
         CP_NUM_SHAPES
 };
 
-/* TODO
 CAMLprim value
 ml_cpShapeGetType(value shape)
 {
     int i=0;  // wrong default
+
+#if CP_ALLOW_PRIVATE_ACCESS == 1
     switch ((((cpShape *)shape)->klass)->type)
+#else
+    switch ((((cpShape *)shape)->klass_private)->type)
+#endif
     {
         case CP_CIRCLE_SHAPE:  i = 0; break;
         case CP_SEGMENT_SHAPE: i = 1; break;
         case CP_POLY_SHAPE:    i = 2; break;
         case CP_NUM_SHAPES:    i = 3; break;
+
+        default: caml_failwith("cpShapeGetType");
     }
     return Val_int(i);
 }
-*/
 
 CAMLprim value
-ml_cpShapeGetBB(value shape)
+ml_cpShapeSegmentQuery( value shape, value ml_a, value ml_b )
 {
-    return (value) & ((cpShape *)shape)->bb;
+    CAMLparam3(shape, ml_a, ml_b);
+    CAMLlocal2(ret, norm);
+    cpSegmentQueryInfo info;
+    cpVect a, b;
+    a.x = Double_field(ml_a,0);
+    a.y = Double_field(ml_a,1);
+
+    b.x = Double_field(ml_b,0);
+    b.y = Double_field(ml_b,1);
+
+    cpBool st = cpShapeSegmentQuery( cpShape_val(shape), a, b, &info );
+
+    if (st) {
+        if (info.shape == NULL) caml_failwith("cpShapeSegmentQuery");
+
+        norm = caml_alloc(2 * Double_wosize, Double_array_tag);
+        Store_double_field(norm, 0, info.n.x);
+        Store_double_field(norm, 1, info.n.y);
+
+        ret = caml_alloc(3, 0);
+        Store_field(ret, 0, Val_cpShape(info.shape) );
+        Store_field(ret, 1, caml_copy_double(info.t) );
+        Store_field(ret, 2, norm );
+
+        CAMLreturn(Val_some(ret));
+    } else {
+        CAMLreturn(Val_none);
+    }
+}
+
+CAMLprim value
+ml_cpSegmentQueryHitPoint( value ml_start, value ml_end, value ml_info )
+{
+    CAMLparam3(ml_start, ml_end, ml_info);
+    CAMLlocal1(ml_p);
+
+    cpSegmentQueryInfo info;
+    cpVect start, end;
+
+    start.x = Double_field(ml_start,0);
+    start.y = Double_field(ml_start,1);
+
+    end.x = Double_field(ml_end,0);
+    end.y = Double_field(ml_end,1);
+
+    info.shape = cpShape_val(Field(ml_info,0));
+    info.t = Double_val(Field(ml_info,1));
+
+    info.n.x = Double_field(Field(ml_info,2),0);
+    info.n.y = Double_field(Field(ml_info,2),1);
+
+    cpVect p = cpSegmentQueryHitPoint(start, end, info);
+
+    ml_p = caml_alloc(2 * Double_wosize, Double_array_tag);
+    Store_double_field( ml_p, 0, p.x );
+    Store_double_field( ml_p, 1, p.y );
+    CAMLreturn( ml_p );
+}
+
+CAMLprim value
+ml_cpSegmentQueryHitDist( value ml_start, value ml_end, value ml_info )
+{
+    cpSegmentQueryInfo info;
+    cpVect start, end;
+
+    start.x = Double_field(ml_start,0);
+    start.y = Double_field(ml_start,1);
+
+    end.x = Double_field(ml_end,0);
+    end.y = Double_field(ml_end,1);
+
+    info.shape = cpShape_val(Field(ml_info,0));
+    info.t = Double_val(Field(ml_info,1));
+
+    info.n.x = Double_field(Field(ml_info,2),0);
+    info.n.y = Double_field(Field(ml_info,2),1);
+
+    cpFloat d = cpSegmentQueryHitDist(start, end, info);
+    return caml_copy_double(d);
 }
 
 // }}}
@@ -326,6 +429,12 @@ ml_cpBBFree( value ml_bb )
     bb = (cpBB *)ml_bb;
     free(bb);
     return Val_unit;
+}
+
+CAMLprim value
+ml_cpShapeGetBB(value shape)
+{
+    return (value) & ((cpShape *)shape)->bb;
 }
 
 
@@ -398,6 +507,33 @@ ml_cpSpaceNew( value unit )
 {
     cpSpace* space = cpSpaceNew();
     return Val_cpSpace(space);
+}
+
+void my_cpSpaceSetDefaultCollisionHandler(cpSpace *space, char *data)
+{
+    cpCollisionBeginFunc begin = NULL;
+    cpCollisionPreSolveFunc preSolve = NULL;
+    cpCollisionPostSolveFunc postSolve = NULL;
+    cpCollisionSeparateFunc separate = NULL;
+
+    cpSpaceSetDefaultCollisionHandler( space,
+        begin, preSolve, postSolve, separate,
+        (void *)data );
+}
+
+void my_cpSpaceAddCollisionHandler(cpSpace *space,
+        cpCollisionType a, cpCollisionType b,
+        char *data)
+{
+    cpCollisionBeginFunc begin = NULL;
+    cpCollisionPreSolveFunc preSolve = NULL;
+    cpCollisionPostSolveFunc postSolve = NULL;
+    cpCollisionSeparateFunc separate = NULL;
+
+    cpSpaceAddCollisionHandler( space,
+        a, b,
+        begin, preSolve, postSolve, separate,
+        (void *)data );
 }
 
 // }}}

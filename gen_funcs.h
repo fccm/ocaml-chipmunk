@@ -29,6 +29,15 @@ void cpSpaceReindexShape(cpSpace *space, cpShape *shape);
 void cpSpaceReindexShapesForBody(cpSpace *space, cpBody *body);
 void cpSpaceUseSpatialHash(cpSpace *space, cpFloat dim, int count);
 
+////void cpSpaceRemoveCollisionHandler(cpSpace *space, cpCollisionType a, cpCollisionType b);
+void cpSpaceRemoveCollisionHandler(cpSpace *space, int a, int b);
+
+// XXX
+void my_cpSpaceSetDefaultCollisionHandler(cpSpace *space, string data);
+///void my_cpSpaceAddCollisionHandler(cpSpace *space, cpCollisionType a, cpCollisionType b, char *data);
+void my_cpSpaceAddCollisionHandler(cpSpace *space, int a, int b, string data);
+
+
 // cpSpace.h struct getters/setters:
 int cpSpaceGetIterations(cpSpace *space);
 void cpSpaceSetIterations(cpSpace *space, int iterations);
@@ -53,6 +62,7 @@ void cpSpaceSetEnableContactGraph(cpSpace *space, cpBool v);
 // cpBody* cpSpaceGetStaticBody(cpSpace *space);
 cpFloat cpSpaceGetCurrentTimeStep(cpSpace *space);
 
+//void cpSpaceHashResize(cpSpaceHash *hash, cpFloat celldim, int numcells);
 
 // cpBody.h
 
@@ -105,12 +115,55 @@ void cpBodySetAngVelLimit(cpBody *body, cpFloat w_limit);
 void cpShapeFree(cpShape *shape);
 void cpResetShapeIdCounter(void);
 
+//cpBB cpShapeCacheBB(cpShape *shape);  // TODO
+//cpBB cpShapeUpdate(cpShape *shape, cpVect pos, cpVect rot);  // TODO
+cpBool cpShapePointQuery(cpShape *shape, cpVect p);
+
+// cpShape.h struct getters/setters:
+
+//cpBB cpShapeGetBB(cpShape *shape);
+cpBool cpShapeGetSensor(cpShape *shape);
+void cpShapeSetSensor(cpShape *shape, cpBool value);
+cpFloat cpShapeGetElasticity(cpShape *shape);
+void cpShapeSetElasticity(cpShape *shape, cpFloat e);
+cpFloat cpShapeGetFriction(cpShape *shape);
+void cpShapeSetFriction(cpShape *shape, cpFloat u);
+cpVect cpShapeGetSurfaceVelocity(cpShape *shape);
+void cpShapeSetSurfaceVelocity(cpShape *shape, cpVect surface_v);
+//cpDataPointer cpShapeGetUserData(cpShape *shape);
+//void cpShapeSetUserData(cpShape *shape, cpDataPointer dp);
+//cpGroup cpShapeGetGroup(cpShape *shape);
+//void cpShapeSetGroup(cpShape *shape, cpGroup g);
+
+//cpCollisionType cpShapeGetCollisionType(cpShape *shape);
+//void cpShapeSetCollisionType(cpShape *shape, cpCollisionType ct);
+int cpShapeGetCollisionType(cpShape *shape);
+void cpShapeSetCollisionType(cpShape *shape, int ct);
+
+
+//cpLayers cpShapeGetLayers(cpShape *shape);
+//void cpShapeSetLayers(cpShape *shape, cpLayers value);
+int cpShapeGetLayers(cpShape *shape);
+void cpShapeSetLayers(cpShape *shape, int layers);
+
+// cpVect cpCircleShapeGetOffset(cpShape *shape);
+// cpFloat cpCircleShapeGetRadius(cpShape *shape);
+
+// void cpSegmentShapeSetNeighbors(cpShape *shape, cpVect prev, cpVect next);
+
+// cpVect cpSegmentShapeGetA(cpShape *shape);
+// cpVect cpSegmentShapeGetB(cpShape *shape);
+// cpVect cpSegmentShapeGetNormal(cpShape *shape);
+// cpFloat cpSegmentShapeGetRadius(cpShape *shape);
+
+
 
 // cpJoint.h
 
 cpConstraint *cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2);
 cpConstraint *cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat min, cpFloat max);
 cpConstraint *cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot);
+cpConstraint *cpPivotJointNew2(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2);
 cpConstraint *cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, cpVect groove_b, cpVect anchr2);
 
 // Constraints

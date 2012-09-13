@@ -72,7 +72,7 @@ val cpvlengthsq : v:cpVect -> float
 val cpvnormalize : v:cpVect -> cpVect
 val cpvforangle : a:float -> cpVect
 val cpvtoangle : v:cpVect -> float
-
+val cpvlerp : v1:cpVect -> v2:cpVect -> t:float -> cpVect
 
 #else
 (* ML *)
@@ -124,6 +124,9 @@ let cpvforangle ~a = cpv (cos a) (sin a) ;;
 
 let cpvtoangle ~v = atan2 v.cp_x v.cp_y ;;
 
+let cpvlerp ~v1 ~v2 ~t =
+  cpvadd (cpvmult v1 (1.0 -. t)) (cpvmult v2 t) ;;
+
 #endif
 
 
@@ -131,6 +134,10 @@ let cpvtoangle ~v = atan2 v.cp_x v.cp_y ;;
 
 type cpBody
 external cpBodyNew: m:float -> i:float -> cpBody = "ml_cpBodyNew"
+
+external cpBodyGetUserData: cpBody -> int = "ml_cpBodyGetUserData"
+
+external cpBodySetUserData: cpBody -> int -> unit = "ml_cpBodySetUserData"
 
 
 (** {3 Chipmunk Spaces} *)
@@ -141,13 +148,13 @@ external cpSpaceNew: unit -> cpSpace = "ml_cpSpaceNew"
 
 (** {3 Chipmunk Shapes} *)
 
-external cpResetShapeIdCounter: unit -> unit = "ml_cpResetShapeIdCounter"
-
 type cpShape
 external cpSegmentShapeNew: body:cpBody -> a:cpVect -> b:cpVect -> r:float -> cpShape = "ml_cpSegmentShapeNew"
 (** [r] is the thickness *)
+
 external cpPolyShapeNew: body:cpBody -> verts:cpVect array -> offset:cpVect -> cpShape = "ml_cpPolyShapeNew"
 external cpCircleShapeNew: body:cpBody -> radius:float -> offset:cpVect -> cpShape = "ml_cpCircleShapeNew"
+external cpBoxShapeNew: body:cpBody -> width:float -> height:float -> cpShape = "ml_cpBoxShapeNew"
 
 external cpShapeGetBody: shape:cpShape -> cpBody = "ml_cpShapeGetBody"
 
@@ -167,9 +174,25 @@ type cpShapeType =
   | CP_POLY_SHAPE
   | CP_NUM_SHAPES
 
-(*
 external cpShapeGetType: shape:cpShape -> cpShapeType = "ml_cpShapeGetType"
-*)
+
+type cpSegmentQueryInfo = {
+  shape : cpShape;
+  (** The shape that was hit, NULL if no collision occured. *)
+  t : float;
+  (** The normalized distance along the query segment in the range [0, 1]. *)
+  n : cpVect;
+  (** The normal of the surface hit. *)
+}
+
+external cpShapeSegmentQuery: shape:cpShape -> a:cpVect -> b:cpVect ->
+  cpSegmentQueryInfo option = "ml_cpShapeSegmentQuery"
+
+external cpSegmentQueryHitPoint: start:cpVect -> end_:cpVect -> info:cpSegmentQueryInfo -> cpVect
+  = "ml_cpSegmentQueryHitPoint"
+
+external cpSegmentQueryHitDist: start:cpVect -> end_:cpVect -> info:cpSegmentQueryInfo -> float
+  = "ml_cpSegmentQueryHitDist"
 
 
 (** Debug *)
@@ -238,6 +261,15 @@ type cpVectArray = cpVect array
 #include "chipmunk.gen.ml"
 
 
+#ifdef MLI
+val cpSpaceAddCollisionHandler : space:cpSpace -> a:int -> b:int -> data:string -> unit
+#else
+(* ML *)
+let cpSpaceAddCollisionHandler =
+ my_cpSpaceAddCollisionHandler ;;
+#endif
+
+
 end
 (* }}} *)
 
@@ -272,9 +304,7 @@ module OO :
         method virtual get_angle : float
         method virtual get_force : Low_level.cpVect
         method virtual get_mass : float
-        method virtual get_mass_inverse : float
         method virtual get_moment : float
-        method virtual get_moment_inverse : float
         method virtual get_pos : Low_level.cpVect
         method virtual get_rot : Low_level.cpVect
         method virtual get_torque : float
@@ -285,9 +315,7 @@ module OO :
         method virtual set_angle : a:float -> unit
         method virtual set_force : f:Low_level.cpVect -> unit
         method virtual set_mass : m:float -> unit
-        method virtual set_mass_inverse : m_inv:float -> unit
         method virtual set_moment : i:float -> unit
-        method virtual set_moment_inverse : i_inv:float -> unit
         method virtual set_pos : p:Low_level.cpVect -> unit
         (*
         method virtual set_rot : rot:Low_level.cpVect -> unit
@@ -315,9 +343,7 @@ module OO :
         method get_angle : float
         method get_force : Low_level.cpVect
         method get_mass : float
-        method get_mass_inverse : float
         method get_moment : float
-        method get_moment_inverse : float
         method get_pos : Low_level.cpVect
         method get_rot : Low_level.cpVect
         method get_torque : float
@@ -328,9 +354,7 @@ module OO :
         method set_angle : a:float -> unit
         method set_force : f:Low_level.cpVect -> unit
         method set_mass : m:float -> unit
-        method set_mass_inverse : m_inv:float -> unit
         method set_moment : i:float -> unit
-        method set_moment_inverse : i_inv:float -> unit
         method set_pos : p:Low_level.cpVect -> unit
         (*
         method set_rot : rot:Low_level.cpVect -> unit
@@ -441,10 +465,8 @@ module OO :
         method virtual body : cp_body_virt
         method virtual free : unit
         method virtual get_circle_shape : cp_circle_shape
-        method virtual get_collision_type : int
         method virtual get_elasticity : float
         method virtual get_friction : float
-        method virtual get_group : int
         method virtual get_layers : int
         method virtual get_poly_shape : cp_poly_shape
         method virtual get_segment_shape : cp_segment_shape
@@ -455,10 +477,16 @@ module OO :
         method virtual is_segment_shape : bool
         method virtual kind : Low_level.cpShapeType
         *)
+        (*
         method virtual set_collision_type : collision_type:int -> unit
+        method virtual get_collision_type : int
+        *)
+        (*
+        method virtual get_group : int
+        method virtual set_group : group:int -> unit
+        *)
         method virtual set_elasticity : e:float -> unit
         method virtual set_friction : u:float -> unit
-        method virtual set_group : group:int -> unit
         method virtual set_layers : layers:int -> unit
         method virtual set_surface_vel : surface_vel:Low_level.cpVect -> unit
         method virtual shape : Low_level.cpShape
@@ -476,10 +504,11 @@ module OO :
         method body : cp_body_virt
         method free : unit
         method get_circle_shape : cp_circle_shape
+        (*
         method get_collision_type : int
+        *)
         method get_elasticity : float
         method get_friction : float
-        method get_group : int
         method get_layers : int
         method get_poly_shape : cp_poly_shape
         method get_segment_shape : cp_segment_shape
@@ -491,14 +520,19 @@ module OO :
         method is_segment_shape : bool
         method kind : Low_level.cpShapeType
         *)
+        (*
         method set_collision_type : collision_type:int -> unit
+        *)
     (** User defined collision type for the shape. *)
         method set_elasticity : e:float -> unit
     (** Coefficient of restitution. (elasticity) *)
         method set_friction : u:float -> unit
     (** Coefficient of friction. *)
+        (*
+        method get_group : int
         method set_group : group:int -> unit
     (** User defined collision group for the shape. *)
+        *)
         method set_layers : layers:int -> unit
     (** User defined layer bitmask for the shape. *)
         method set_surface_vel : surface_vel:Low_level.cpVect -> unit
@@ -596,9 +630,7 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual get_angle : float
     method virtual get_force : Low_level.cpVect
     method virtual get_mass : float
-    method virtual get_mass_inverse : float
     method virtual get_moment : float
-    method virtual get_moment_inverse : float
     method virtual get_pos : Low_level.cpVect
     method virtual get_rot : Low_level.cpVect
     method virtual get_torque : float
@@ -609,9 +641,7 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual set_angle : a:float -> unit
     method virtual set_force : f:Low_level.cpVect -> unit
     method virtual set_mass : m:float -> unit
-    method virtual set_mass_inverse : m_inv:float -> unit
     method virtual set_moment : i:float -> unit
-    method virtual set_moment_inverse : i_inv:float -> unit
     method virtual set_pos : p:Low_level.cpVect -> unit
     (*
     method virtual set_rot : rot:Low_level.cpVect -> unit
@@ -644,9 +674,7 @@ class cp_body ~m ~i =
     method apply_force        = cpBodyApplyForce ~body
 
     method set_mass           = cpBodySetMass ~body
-    method set_mass_inverse   = cpBodySetMassInverse ~body
     method set_moment         = cpBodySetMoment ~body
-    method set_moment_inverse = cpBodySetMomentInverse ~body
     method set_pos            = cpBodySetPos ~body
     method set_vel            = cpBodySetVel ~body
     method set_force          = cpBodySetForce ~body
@@ -656,12 +684,10 @@ class cp_body ~m ~i =
     (*
     method set_rot            = cpBodySetRot ~body
     *)
-    method set_vel_lim        = cpBodySetVelLim ~body
-    method set_ang_vel_lim    = cpBodySetAngVelLim ~body
+    method set_vel_lim        = cpBodySetVelLimit ~body
+    method set_ang_vel_lim    = cpBodySetAngVelLimit ~body
     method get_mass           = cpBodyGetMass ~body
-    method get_mass_inverse   = cpBodyGetMassInverse ~body
     method get_moment         = cpBodyGetMoment ~body
-    method get_moment_inverse = cpBodyGetMomentInverse ~body
     method get_pos            = cpBodyGetPos ~body
     method get_vel            = cpBodyGetVel ~body
     method get_force          = cpBodyGetForce ~body
@@ -690,9 +716,7 @@ let to_cp_body ~body =
     method apply_force        = cpBodyApplyForce ~body
 
     method set_mass           = cpBodySetMass ~body
-    method set_mass_inverse   = cpBodySetMassInverse ~body
     method set_moment         = cpBodySetMoment ~body
-    method set_moment_inverse = cpBodySetMomentInverse ~body
     method set_pos            = cpBodySetPos ~body
     method set_vel            = cpBodySetVel ~body
     method set_force          = cpBodySetForce ~body
@@ -702,12 +726,10 @@ let to_cp_body ~body =
     (*
     method set_rot            = cpBodySetRot ~body
     *)
-    method set_vel_lim        = cpBodySetVelLim ~body
-    method set_ang_vel_lim    = cpBodySetAngVelLim ~body
+    method set_vel_lim        = cpBodySetVelLimit ~body
+    method set_ang_vel_lim    = cpBodySetAngVelLimit ~body
     method get_mass           = cpBodyGetMass ~body
-    method get_mass_inverse   = cpBodyGetMassInverse ~body
     method get_moment         = cpBodyGetMoment ~body
-    method get_moment_inverse = cpBodyGetMomentInverse ~body
     method get_pos            = cpBodyGetPos ~body
     method get_vel            = cpBodyGetVel ~body
     method get_force          = cpBodyGetForce ~body
@@ -1007,13 +1029,18 @@ class virtual cp_shape_virt (_shape:Low_level.cpShape) =
     method virtual set_surface_vel : surface_vel:Low_level.cpVect -> unit
     method virtual shape : Low_level.cpShape
 
+    (*
+    method virtual set_collision_type : collision_type:int -> unit
     method virtual get_collision_type : int
-    method virtual get_group : int
+    *)
+
+    method virtual set_layers : layers:int -> unit
     method virtual get_layers : int
 
-    method virtual set_collision_type : collision_type:int -> unit
+    (*
     method virtual set_group : group:int -> unit
-    method virtual set_layers : layers:int -> unit
+    method virtual get_group : int
+    *)
   end
 (* }}} *)
 
@@ -1063,17 +1090,21 @@ class cp_shape ~body:(_body :cp_body_virt) ~kind:_kind =
     method set_friction   = cpShapeSetFriction ~shape
     (** Coefficient of friction. *)
 
-    method set_surface_vel ~surface_vel = cpShapeSetSurfaceV shape surface_vel
-    method get_surface_vel  = cpShapeGetSurfaceV ~shape
+    method set_surface_vel ~surface_vel = cpShapeSetSurfaceVelocity shape surface_vel
+    method get_surface_vel  = cpShapeGetSurfaceVelocity ~shape
     (** Surface velocity used when solving for friction. *)
 
+    (*
     method get_collision_type = cpShapeGetCollisionType ~shape
     method set_collision_type = cpShapeSetCollisionType ~shape
     (** User defined collision type for the shape. *)
+    *)
 
+    (*
     method get_group = cpShapeGetGroup ~shape
     method set_group = cpShapeSetGroup ~shape
     (** User defined collision group for the shape. *)
+    *)
 
     method get_layers = cpShapeGetLayers ~shape
     method set_layers = cpShapeSetLayers ~shape
@@ -1105,17 +1136,21 @@ let to_cp_shape ~shape =
 
     method set_elasticity = cpShapeSetElasticity ~shape
     method set_friction   = cpShapeSetFriction ~shape
-    method set_surface_vel ~surface_vel  = cpShapeSetSurfaceV shape surface_vel
+    method set_surface_vel ~surface_vel  = cpShapeSetSurfaceVelocity shape surface_vel
 
     method get_elasticity  = cpShapeGetElasticity ~shape
     method get_friction    = cpShapeGetFriction ~shape
-    method get_surface_vel = cpShapeGetSurfaceV ~shape
+    method get_surface_vel = cpShapeGetSurfaceVelocity ~shape
 
+    (*
     method get_collision_type = cpShapeGetCollisionType ~shape
     method set_collision_type = cpShapeSetCollisionType ~shape
+    *)
 
+    (*
     method get_group = cpShapeGetGroup ~shape
     method set_group = cpShapeSetGroup ~shape
+    *)
 
     method get_layers = cpShapeGetLayers ~shape
     method set_layers = cpShapeSetLayers ~shape
