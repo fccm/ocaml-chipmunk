@@ -1,5 +1,5 @@
 name="chipmunk"
 version="0.03a"
-description="Ocaml bindings to Chipmunk, a physics simulation library"
+description="OCaml bindings to Chipmunk, a physics simulation library"
 archive(byte) = "chipmunk.cma"
 archive(native) = "chipmunk.cmxa"

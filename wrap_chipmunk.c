@@ -491,13 +491,13 @@ ml_cpArbiterGetShapeB( value arbiter )
 CAMLprim value
 ml_cpArbiterGetShapePA( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->private_a);
+    return (value) (((cpArbiter *) arbiter)->a);
 }
 
 CAMLprim value
 ml_cpArbiterGetShapePB( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->private_b);
+    return (value) (((cpArbiter *) arbiter)->b);
 }
 
 

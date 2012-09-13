@@ -297,8 +297,6 @@ module OO :
       Low_level.cpBody ->
       object
         val body : Low_level.cpBody
-        method virtual apply_bias_impulse :
-          j:Low_level.cpVect -> r:Low_level.cpVect -> unit
         method virtual apply_force :
           f:Low_level.cpVect -> r:Low_level.cpVect -> unit
         method virtual apply_impulse :
@@ -344,8 +342,6 @@ module OO :
       i:float ->
       object
         val body : Low_level.cpBody
-        method apply_bias_impulse :
-          j:Low_level.cpVect -> r:Low_level.cpVect -> unit
         method apply_force : f:Low_level.cpVect -> r:Low_level.cpVect -> unit
         method apply_impulse :
           j:Low_level.cpVect -> r:Low_level.cpVect -> unit
@@ -685,7 +681,6 @@ let get_arbiter_contacts = cpArbiterGetContacts ;;
 class virtual cp_body_virt (_body : Low_level.cpBody) =
   object
     val body = _body
-    method virtual apply_bias_impulse : j:Low_level.cpVect -> r:Low_level.cpVect -> unit
     method virtual apply_force : f:Low_level.cpVect -> r:Low_level.cpVect -> unit
     method virtual apply_impulse : j:Low_level.cpVect -> r:Low_level.cpVect -> unit
     method virtual body : Low_level.cpBody
@@ -740,7 +735,6 @@ class cp_body ~m ~i =
     method local2world        = cpBodyLocal2World ~body
     method world2local        = cpBodyWorld2Local ~body
     method apply_impulse      = cpBodyApplyImpulse ~body
-    method apply_bias_impulse = cpBodyApplyBiasImpulse ~body
     method reset_forces       = cpBodyResetForces ~body
     method apply_force        = cpBodyApplyForce ~body
 
@@ -789,7 +783,6 @@ let to_cp_body ~body =
     method local2world        = cpBodyLocal2World ~body
     method world2local        = cpBodyWorld2Local ~body
     method apply_impulse      = cpBodyApplyImpulse ~body
-    method apply_bias_impulse = cpBodyApplyBiasImpulse ~body
     method reset_forces       = cpBodyResetForces ~body
     method apply_force        = cpBodyApplyForce ~body
 

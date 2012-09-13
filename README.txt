@@ -21,10 +21,10 @@
     http://www.linux-nantes.org/~fmonnier/OCaml/GL/
 
   run 'make doc' to generate the interface ocamldoc
-  documentation. Two interfaces are provided, a High
+  documentation. Two interfaces are provided, a high
   level object oriented one, and a low level one.
 
-  The commented demo 'moon_buggy.ml' uses the High 
+  The commented demo 'moon_buggy.ml' uses the high
   level interface, and the demo 'demo_dist.ml' uses
   the low level one.
 

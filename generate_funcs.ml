@@ -2,7 +2,7 @@
 (* {{{ COPYING *(
 
   Code generator for wrapping C functions to OCaml.
-  Copyright (C) 2008  Florent Monnier  <fmonnier@linux-nantes.org>
+  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>
 
   This program is free software: you can redistribute it and/or
   modify it under the terms of the GNU General Public License

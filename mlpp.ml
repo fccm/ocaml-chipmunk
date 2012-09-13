@@ -4,7 +4,7 @@
   |  This is a minimal preprocessor for OCaml source files.               |
   +-----------------------------------------------------------------------+
   |  Copyright (C) 2008  Florent Monnier                                  |
-  |  Contact:  <fmonnier@linux-nantes.org>                                |
+  |  Contact:  <monnier.florent(_)gmail.com>                              |
   +-----------------------------------------------------------------------+
   |  This program is free software: you can redistribute it and/or        |
   |  modify it under the terms of the GNU General Public License          |

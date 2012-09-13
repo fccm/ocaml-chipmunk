@@ -202,8 +202,8 @@ cpArbiter arbiter {
 
 // The two shapes involved in the collision.
 // These variables are NOT in the order defined by the collision handler.
-        PA( cpShape private_a ),
-        PB( cpShape private_b ),
+        PA( cpShape a ),
+        PB( cpShape b ),
 
 // Calculated before calling the pre-solve collision handler
 // Override them with custom values if you want specialized behavior

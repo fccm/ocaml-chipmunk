@@ -31,7 +31,6 @@ void cpBodyUpdatePosition(cpBody *body, cpFloat dt);
 cpVect cpBodyLocal2World(cpBody *body, cpVect v);
 cpVect cpBodyWorld2Local(cpBody *body, cpVect v);
 void cpBodyApplyImpulse(cpBody *body, cpVect j, cpVect r);
-void cpBodyApplyBiasImpulse(cpBody *body, cpVect j, cpVect r);
 void cpBodyResetForces(cpBody *body);
 void cpBodyApplyForce(cpBody *body, cpVect f, cpVect r);
 

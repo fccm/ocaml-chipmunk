@@ -1,7 +1,7 @@
 # {{{ COPYING 
 #
 #  This file is part of a binding for OCaml to the Chipmunk library.
-#  Copyright (C) 2008  Florent Monnier  <fmonnier@linux-nantes.org>
+#  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>
 #
 #  This program is free software: you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License

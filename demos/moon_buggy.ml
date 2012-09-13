@@ -20,7 +20,7 @@
  * SOFTWARE.
  *)
 
-(* Converted to OCaml by F. Monnier *)
+(* Converted from C to OCaml by Florent Monnier *)
 
 #directory "+glMLite"
 #load "GL.cma"
@@ -268,6 +268,10 @@ let moonBuggy_init() =
   shape#set_friction 1.5;
   space#add_shape shape;
 
+  (* To simulate the nice soft suspension of the buggy, we apply
+     spring forces between the wheels and chassis. This function
+     takes a lot of parameters, read the documentation for a
+     detailed description. *)
   let constr1 = damped_spring chassis wheel1 (cpv(-40.0) 40.0) cpvzero 70.0 400.0 15.0
   and constr2 = damped_spring chassis wheel2 (cpv( 40.0) 40.0) cpvzero 70.0 400.0 15.0 in
   space#add_constraint constr1;
@@ -322,15 +326,6 @@ let moonBuggy_update() =
     (* Apply the torque to both the chassis and the wheel in opposite directions. *)
     wheel1#set_torque (wheel1#get_torque +. torque);
     chassis#set_torque (chassis#get_torque -. torque);
-    
-    (* To simulate the nice soft suspension of the buggy, we apply
-       spring forces between the wheels and chassis. This function
-       takes a lot of parameters, read the documentation for a
-       detailed description. *)
-    (*
-    damped_spring chassis wheel1 (cpv(-40.0) 40.0) cpvzero 70.0 400.0 15.0 dt;
-    damped_spring chassis wheel2 (cpv( 40.0) 40.0) cpvzero 70.0 400.0 15.0 dt;
-    *)
 
     (* Finally, we step the space *)
     space#step dt;
