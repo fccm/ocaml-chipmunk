@@ -168,7 +168,8 @@ let prev_conv_f arr_arg len =
 let get_c_return func_type =
   match func_type with
   | "void" -> ("", "", "return Val_unit;")
-  | "cpJoint *" -> ("", "cpJoint *joint_p = ", "return (value) joint_p;")
+  | "cpConstraint *" ->
+      ("", "cpConstraint *joint_constr = ", "return (value) joint_constr;")
   | "cpVect" ->
       let mem_gc = Printf.sprintf "
     CAMLparam0();
@@ -192,7 +193,7 @@ let get_c_return func_type =
 let get_ml_return func_type =
   match func_type with
   | "void" -> ("unit")
-  | "cpJoint *" -> ("cpJoint")
+  | "cpConstraint *" -> ("cpConstraint")
   | "cpVect" -> ("cpVect")
   | _ ->
       failwith(Printf.sprintf "ML return type TOD0: '%s'" func_type)
@@ -295,7 +296,8 @@ let () =
       end
     done
   with
-    End_of_file -> ()
+    End_of_file ->
+      print_newline()
 ;;
 
 (* vim: sw=2 sts=2 ts=2 et fdm=marker

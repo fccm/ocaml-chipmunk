@@ -8,11 +8,11 @@ void cpSpaceFreeChildren(cpSpace *space);
 void cpSpaceAddShape(cpSpace *space, cpShape *shape);
 void cpSpaceAddStaticShape(cpSpace *space, cpShape *shape);
 void cpSpaceAddBody(cpSpace *space, cpBody *body);
-void cpSpaceAddJoint(cpSpace *space, cpJoint *joint);
+void cpSpaceAddConstraint(cpSpace *space, cpConstraint *constr);
 void cpSpaceRemoveShape(cpSpace *space, cpShape *shape);
 void cpSpaceRemoveStaticShape(cpSpace *space, cpShape *shape);
 void cpSpaceRemoveBody(cpSpace *space, cpBody *body);
-void cpSpaceRemoveJoint(cpSpace *space, cpJoint *joint);
+void cpSpaceRemoveConstraint(cpSpace *space, cpConstraint *constr);
 void cpSpaceResizeStaticHash(cpSpace *space, cpFloat dim, int count);
 void cpSpaceResizeActiveHash(cpSpace *space, cpFloat dim, int count);
 void cpSpaceRehashStatic(cpSpace *space);
@@ -34,7 +34,6 @@ void cpBodyApplyImpulse(cpBody *body, cpVect j, cpVect r);
 void cpBodyApplyBiasImpulse(cpBody *body, cpVect j, cpVect r);
 void cpBodyResetForces(cpBody *body);
 void cpBodyApplyForce(cpBody *body, cpVect f, cpVect r);
-void cpDampedSpring(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat rlen, cpFloat k, cpFloat dmp, cpFloat dt);
 
 
 // cpShape.h
@@ -45,10 +44,13 @@ void cpResetShapeIdCounter(void);
 
 // cpJoint.h
 
-void cpJointFree(cpJoint *joint);
-cpJoint *cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2);
-cpJoint *cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat min, cpFloat max);
-cpJoint *cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot);
-cpJoint *cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, cpVect groove_b, cpVect anchr2);
+cpConstraint *cpPinJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2);
+cpConstraint *cpSlideJointNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat min, cpFloat max);
+cpConstraint *cpPivotJointNew(cpBody *a, cpBody *b, cpVect pivot);
+cpConstraint *cpGrooveJointNew(cpBody *a, cpBody *b, cpVect groove_a, cpVect groove_b, cpVect anchr2);
 
+// Constraints
+
+void cpConstraintFree(cpConstraint *constr);
+cpConstraint *cpDampedSpringNew(cpBody *a, cpBody *b, cpVect anchr1, cpVect anchr2, cpFloat rest_length, cpFloat stiffness, cpFloat damping);
 

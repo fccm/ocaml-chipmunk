@@ -26,30 +26,21 @@ gens:  wrap_chipmunk.gen.c  chipmunk.gen.ml
 
 wrap_chipmunk.gen.c: gen_funcs.h  generate_funcs.ml  generate_structs.ml  gen_structs.h
 	> $@
-	echo "// This is a generated file"    >> $@
-	ocaml generate_funcs.ml --gen-c  < $< >> $@
-	echo "// Structure member access"     >> $@
+	echo "// This is a generated file"                >> $@
+	ocaml generate_funcs.ml --gen-c  < gen_funcs.h    >> $@
+	echo "// Structure member access"                 >> $@
 	ocaml generate_structs.ml --gen-c < gen_structs.h >> $@
 
 chipmunk.gen.ml: gen_funcs.h  generate_funcs.ml  generate_structs.ml  gen_structs.h
 	> $@
-	echo "(* This is a generated file *)"      >> $@
-	ocaml generate_funcs.ml --gen-ml <  $<     >> $@
-	echo "(** {4 Structure Members Access} *)" >> $@
+	echo "(* This is a generated file *)"              >> $@
+	ocaml generate_funcs.ml --gen-ml < gen_funcs.h     >> $@
+	echo                                               >> $@
+	echo "(** {4 Structure Members Access} *)"         >> $@
 	ocaml generate_structs.ml --gen-ml < gen_structs.h >> $@
 
-# objects
 wrap_chipmunk.o: wrap_chipmunk.c  wrap_chipmunk.gen.c
-	#ocamlc -c -cc "gcc -static  -O3 -std=gnu99 -ffast-math -o $@" $<
 	ocamlc -c -ccopt "-O3 -std=gnu99 -ffast-math" $<
-
-#wrap_chipmunk.o: wrap_chipmunk.c  wrap_chipmunk.gen.c
-#	gcc -O3 -std=gnu99 -ffast-math -o wrap_chipmunk.o -c  \
-#	    -I'/usr/local/lib/ocaml' 'wrap_chipmunk.c'  \
-#	    -I'../src' ../src/cp*.c ../src/chipmunk.c
-
-#wrap_chipmunk.o: wrap_chipmunk.c  wrap_chipmunk.gen.c
-#	ocamlc -c  -cc "gcc -O3 -std=gnu99 -ffast-math -I../src -o $@ ../src/cp*.c ../src/chipmunk.c" $< \
 
 dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o
 	ocamlmklib  \
@@ -58,10 +49,6 @@ dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o
 	    -o  _chipmunk_stubs  $<  \
 	    -ccopt -O3  -ccopt -std=gnu99  -ccopt -ffast-math  \
 	    -lchipmunk
-#	    -lchipmunk_static
-#	    -L../src   -lchipmunk -lchipmunk_static
-#	    -ccopt -g  -ccopt -O0  \
-
 
 #  Makes use of a minimal preprocessor for OCaml source files.
 #  It is similar to cpp, but this replacement for cpp is because
@@ -105,7 +92,6 @@ chipmunk.cma:  chipmunk.cmo  dll_chipmunk_stubs.so
 	       -dllib dll_chipmunk_stubs.so  \
 	      -cclib -l_chipmunk_stubs  \
 	      -cclib -lchipmunk 
-#	      -cclib -lchipmunk_static
 
 # native
 chipmunk.cmx: chipmunk.ml chipmunk.cmi
@@ -118,10 +104,8 @@ chipmunk.cmxa  chipmunk.a:  chipmunk.cmx  dll_chipmunk_stubs.so
 	  -ccopt -L/usr/local/  \
 	  -ccopt -L/usr/local/lib  \
 	      -cclib -lchipmunk
-#	      -cclib -lchipmunk_static
-#	  -ccopt -L../src  \
 
-.PHONY: clean-doc clean run-opt-demo test install
+.PHONY: clean-doc clean clean-mlpp run-opt-demo test install
 
 # doc
 doc: chipmunk.mli
@@ -136,7 +120,7 @@ clean-doc:
 	if [ -d doc ]; then touch doc; fi
 
 # clean
-clean: clean-doc
+clean: clean-doc clean-mlpp
 	rm -f \
 	    *.[oa] *.so *.cm[ixoa] *.cmxa *.opt *~  \
 	    doc/*.{html,css}  \
@@ -202,7 +186,7 @@ uninstall_findlib:  $(DIST_FILES)  $(SO_DIST_FILES) META
 
 # tar-ball
 
-VERSION=0.01
+VERSION=0.03
 P_DIR=OCaml-Chipmunk-$(VERSION)
 TARBALL=$(P_DIR).tgz
 

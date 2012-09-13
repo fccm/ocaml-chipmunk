@@ -1,14 +1,14 @@
 
   This archive contains OCaml bindings for the
-  Chipmunk 2D physics library.
+  Chipmunk 2D physics library:
+    http://code.google.com/p/chipmunk-physics/
 
-    http://wiki.slembcke.net/main/published/Chipmunk
-
+  This bindings was tested with Chipmunk version 5.2.0
 
   The Makefile assuses Chipmunk is installed in
-    /usr/local/lib/libchipmunk.so
+    /usr/(local)/lib/libchipmunk.so
   and that the header files are located in
-    /usr/local/include/chipmunk/
+    /usr/(local)/include/chipmunk/
 
   If these are in other (not compatible) directories,
   edit the Makefile to fix the path.
@@ -31,9 +31,9 @@
   You can choose between two available installations.
   'make install' will apply a manual installation, and
   'make install_findlib' for the findlib users.
-  With the last one, you can compile stuff with:
+  Findlib users can compile stuff with:
     ocamlfind ocamlc -linkpkg -package chipmunk foo.ml
-  With manual install, just:
+  and for those who prefer the traditional way, just:
     ocamlc -I +chipmunk chipmunk.cma foo.ml
 
   You can use this binding, either under the terms
@@ -43,5 +43,5 @@
     LICENCE_GPL.txt  and  LICENCE_MIT.txt
 
   Comments and feedbacks are wellcome, write to
-    fmonnie r@linux-nantes.org  (remove space)
+    <monnier.florent(_)gmail.com>
 

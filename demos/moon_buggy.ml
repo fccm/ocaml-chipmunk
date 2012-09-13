@@ -238,8 +238,10 @@ let moonBuggy_init() =
      wheel at its center so that it rolls nicely, we could attach it
      to the chassis anywhere, though we'll just attach it to the
      center of the chassis as well. *)
-  space#add_joint (new cp_joint chassis wheel1 (PIN_JOINT(cpvzero, cpvzero)));
-  space#add_joint (new cp_joint chassis wheel2 (PIN_JOINT(cpvzero, cpvzero)));
+  let j1 = new cp_joint chassis wheel1 (PIN_JOINT(cpvzero, cpvzero))
+  and j2 = new cp_joint chassis wheel2 (PIN_JOINT(cpvzero, cpvzero)) in
+  space#add_constraint (j1#get_constraint);
+  space#add_constraint (j2#get_constraint);
 
   (* Now we need to attach collision shapes to the chassis and
      wheels. The shapes themselves contain no useful information to
@@ -265,6 +267,11 @@ let moonBuggy_init() =
   let shape = new cp_shape wheel2 (CIRCLE_SHAPE(wheel_radius, cpvzero)) in
   shape#set_friction 1.5;
   space#add_shape shape;
+
+  let constr1 = damped_spring chassis wheel1 (cpv(-40.0) 40.0) cpvzero 70.0 400.0 15.0
+  and constr2 = damped_spring chassis wheel2 (cpv( 40.0) 40.0) cpvzero 70.0 400.0 15.0 in
+  space#add_constraint constr1;
+  space#add_constraint constr2;
 
   active_shapes_li := shape :: !active_shapes_li;
 ;;
@@ -320,9 +327,11 @@ let moonBuggy_update() =
        spring forces between the wheels and chassis. This function
        takes a lot of parameters, read the documentation for a
        detailed description. *)
+    (*
     damped_spring chassis wheel1 (cpv(-40.0) 40.0) cpvzero 70.0 400.0 15.0 dt;
     damped_spring chassis wheel2 (cpv( 40.0) 40.0) cpvzero 70.0 400.0 15.0 dt;
-    
+    *)
+
     (* Finally, we step the space *)
     space#step dt;
   done;

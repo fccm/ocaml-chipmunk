@@ -3,7 +3,7 @@
   +-----------------------------------------------------------------------+
   |  This file is part of a binding for OCaml to the Chipmunk library.    |
   +-----------------------------------------------------------------------+
-  |  Copyright (C) 2008  Florent Monnier  <fmonnier@linux-nantes.org>     |
+  |  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>   |
   +-----------------------------------------------------------------------+
   |  This program is free software: you can redistribute it and/or        |
   |  modify it under the terms of the GNU General Public License          |
@@ -21,7 +21,7 @@
 
 }}} */
 
-//include "chipmunk.h"
+#define CP_USE_DEPRECATED_API_4 1
 #include <chipmunk/chipmunk.h>
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
@@ -66,16 +66,16 @@ ml_get_cp_collision_slop( value unit )
 }
 
 CAMLprim value
-ml_set_cp_joint_bias_coef( value ml_cp_joint_bias_coef )
+ml_set_cp_constraint_bias_coef( value ml_cp_constraint_bias_coef )
 {
-    cp_joint_bias_coef = Double_val(ml_cp_joint_bias_coef);
+    cp_constraint_bias_coef = Double_val(ml_cp_constraint_bias_coef);
     return Val_unit;
 }
 
 CAMLprim value
-ml_get_cp_joint_bias_coef( value unit )
+ml_get_cp_constraint_bias_coef( value unit )
 {
-    return caml_copy_double(cp_joint_bias_coef);
+    return caml_copy_double(cp_constraint_bias_coef);
 }
 
 CAMLprim value
@@ -489,15 +489,15 @@ ml_cpArbiterGetShapeB( value arbiter )
 */
 
 CAMLprim value
-ml_cpArbiterGetShapeA( value arbiter )
+ml_cpArbiterGetShapePA( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->a);
+    return (value) (((cpArbiter *) arbiter)->private_a);
 }
 
 CAMLprim value
-ml_cpArbiterGetShapeB( value arbiter )
+ml_cpArbiterGetShapePB( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->b);
+    return (value) (((cpArbiter *) arbiter)->private_b);
 }
 
 
@@ -525,6 +525,16 @@ ml_cpArbiterGetContacts( value arbiter )
 
 // }}}
 
+CAMLprim value
+Val_cpHashValue( cpHashValue v )
+{
+// in <chipmunk/chipmunk_types.h> we have
+// typedef unsigned int cpHashValue;
+    if (v >> 31) caml_failwith("cpHashValue"); // check overflow
+    return Val_long(v);
+}
+
 #include "wrap_chipmunk.gen.c"
 
-// vim: sw=4 sts=4 ts=4 et fdm=marker
+// vim: sw=4 sts=4 ts=4 et
+// fdm=marker

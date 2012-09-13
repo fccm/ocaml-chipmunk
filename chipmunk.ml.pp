@@ -3,7 +3,7 @@
   +-----------------------------------------------------------------------+
   |  This file is part of a binding for OCaml to the Chipmunk library.    |
   +-----------------------------------------------------------------------+
-  |  Copyright (C) 2008  Florent Monnier  <fmonnier@linux-nantes.org>     |
+  |  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>   |
   +-----------------------------------------------------------------------+
   |  This program is free software: you can redistribute it and/or        |
   |  modify it under the terms of the GNU General Public License          |
@@ -40,8 +40,8 @@ external get_cp_collision_slop: unit -> float = "ml_get_cp_collision_slop"
 external set_cp_bias_coef: float -> unit = "ml_set_cp_bias_coef"
 external get_cp_bias_coef: unit -> float = "ml_get_cp_bias_coef"
 
-external set_cp_joint_bias_coef: float -> unit = "ml_set_cp_joint_bias_coef"
-external get_cp_joint_bias_coef: unit -> float = "ml_get_cp_joint_bias_coef"
+external set_cp_constraint_bias_coef: float -> unit = "ml_set_cp_constraint_bias_coef"
+external get_cp_constraint_bias_coef: unit -> float = "ml_get_cp_constraint_bias_coef"
 
 external set_cp_contact_persistence: int -> unit = "ml_set_cp_contact_persistence"
 external get_cp_contact_persistence: unit -> int = "ml_get_cp_contact_persistence"
@@ -203,6 +203,7 @@ type cpJointType =
   | CP_PIVOT_JOINT
   | CP_GROOVE_JOINT
 
+type cpConstraint
 type cpJoint
 
 type cpPinJoint
@@ -232,8 +233,8 @@ external cpSpaceGetArbiters: space:cpSpace -> cpArbiter array = "ml_cpSpaceGetAr
 
 external cpArbiterGetContacts: arbiter:cpArbiter -> cpContact array = "ml_cpArbiterGetContacts"
 
-external cpArbiterGetShapeA: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapeA"
-external cpArbiterGetShapeB: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapeB"
+external cpArbiterGetShapePA: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapePA"
+external cpArbiterGetShapePB: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapePB"
 
 
 (** {5 Generated Part} *)
@@ -385,111 +386,8 @@ module OO :
         method world2local : v:Low_level.cpVect -> Low_level.cpVect
       end
     val to_cp_body : body:Low_level.cpBody -> cp_body_virt
+
     exception Wrong_joint_kind
-    class cp_pin_joint :
-      joint:< is_pin_joint : bool; joint : Low_level.cpJoint; .. > ->
-      object
-        val pin_joint : Low_level.cpPinJoint
-        method get_anchor1 : Low_level.cpVect
-        method get_anchor2 : Low_level.cpVect
-        method get_bias : float
-        method get_dist : float
-        method get_j_n_acc : float
-        method get_n_mass : float
-        method get_r1 : Low_level.cpVect
-        method get_r2 : Low_level.cpVect
-        method get_vect : Low_level.cpVect
-        method set_anchor1 : anchr1:Low_level.cpVect -> unit
-        method set_anchor2 : anchr2:Low_level.cpVect -> unit
-        method set_bias : bias:float -> unit
-        method set_dist : dist:float -> unit
-        method set_j_n_acc : jnAcc:float -> unit
-        method set_n_mass : nMass:float -> unit
-        method set_r1 : r1:Low_level.cpVect -> unit
-        method set_r2 : r2:Low_level.cpVect -> unit
-        method set_vect : n:Low_level.cpVect -> unit
-      end
-    class cp_slide_joint :
-      joint:< is_slide_joint : bool; joint : Low_level.cpJoint; .. > ->
-      object
-        val slide_joint : Low_level.cpSlideJoint
-        method get_anchor1 : Low_level.cpVect
-        method get_anchor2 : Low_level.cpVect
-        method get_bias : float
-        method get_j_bias : float
-        method get_j_n_acc : float
-        method get_max : float
-        method get_min : float
-        method get_n_mass : float
-        method get_r1 : Low_level.cpVect
-        method get_r2 : Low_level.cpVect
-        method get_vect : Low_level.cpVect
-        method set_anchor1 : anchr1:Low_level.cpVect -> unit
-        method set_anchor2 : anchr2:Low_level.cpVect -> unit
-        method set_bias : bias:float -> unit
-        method set_j_bias : jBias:float -> unit
-        method set_j_n_acc : jnAcc:float -> unit
-        method set_max : max:float -> unit
-        method set_min : min:float -> unit
-        method set_n_mass : nMass:float -> unit
-        method set_r1 : r1:Low_level.cpVect -> unit
-        method set_r2 : r2:Low_level.cpVect -> unit
-        method set_vect : n:Low_level.cpVect -> unit
-      end
-    class cp_pivot_joint :
-      joint:< is_pivot_joint : bool; joint : Low_level.cpJoint; .. > ->
-      object
-        val pivot_joint : Low_level.cpPivotJoint
-        method get_anchor1 : Low_level.cpVect
-        method get_anchor2 : Low_level.cpVect
-        method get_bias : Low_level.cpVect
-        method get_j_acc : Low_level.cpVect
-        method get_j_bias : Low_level.cpVect
-        method get_k1 : Low_level.cpVect
-        method get_k2 : Low_level.cpVect
-        method get_r1 : Low_level.cpVect
-        method get_r2 : Low_level.cpVect
-        method set_anchor1 : anchr1:Low_level.cpVect -> unit
-        method set_anchor2 : anchr2:Low_level.cpVect -> unit
-        method set_bias : bias:Low_level.cpVect -> unit
-        method set_j_acc : jAcc:Low_level.cpVect -> unit
-        method set_j_bias : jBias:Low_level.cpVect -> unit
-        method set_k1 : k1:Low_level.cpVect -> unit
-        method set_k2 : k2:Low_level.cpVect -> unit
-        method set_r1 : r1:Low_level.cpVect -> unit
-        method set_r2 : r2:Low_level.cpVect -> unit
-      end
-    class cp_groove_joint :
-      joint:< is_groove_joint : bool; joint : Low_level.cpJoint; .. > ->
-      object
-        val groove_joint : Low_level.cpGrooveJoint
-        method get_anchor2 : Low_level.cpVect
-        method get_bias : Low_level.cpVect
-        method get_clamp : float
-        method get_grv_a : Low_level.cpVect
-        method get_grv_b : Low_level.cpVect
-        method get_grv_n : Low_level.cpVect
-        method get_grv_tn : Low_level.cpVect
-        method get_j_acc : Low_level.cpVect
-        method get_j_bias : Low_level.cpVect
-        method get_k1 : Low_level.cpVect
-        method get_k2 : Low_level.cpVect
-        method get_r1 : Low_level.cpVect
-        method get_r2 : Low_level.cpVect
-        method set_anchor2 : anchr2:Low_level.cpVect -> unit
-        method set_bias : bias:Low_level.cpVect -> unit
-        method set_clamp : clamp:float -> unit
-        method set_grv_a : grv_a:Low_level.cpVect -> unit
-        method set_grv_b : grv_b:Low_level.cpVect -> unit
-        method set_grv_n : grv_n:Low_level.cpVect -> unit
-        method set_grv_tn : grv_tn:Low_level.cpVect -> unit
-        method set_j_acc : jAcc:Low_level.cpVect -> unit
-        method set_j_bias : jBias:Low_level.cpVect -> unit
-        method set_k1 : k1:Low_level.cpVect -> unit
-        method set_k2 : k2:Low_level.cpVect -> unit
-        method set_r1 : r1:Low_level.cpVect -> unit
-        method set_r2 : r2:Low_level.cpVect -> unit
-      end
 
 (** parameters to create a new [cp_joint]. *)
     type joint_kind =
@@ -518,20 +416,26 @@ module OO :
       b:cp_body_virt ->
       kind:joint_kind ->
       object
-        val joint : Low_level.cpJoint
+        val constr : Low_level.cpConstraint
         val kind : Low_level.cpJointType
         method free : unit
+        (*
         method get_groove_joint : cp_groove_joint
         method get_pin_joint : cp_pin_joint
         method get_pivot_joint : cp_pivot_joint
         method get_slide_joint : cp_slide_joint
+        *)
+        method get_constraint : Low_level.cpConstraint
+
         method is_groove_joint : bool
         method is_pin_joint : bool
         method is_pivot_joint : bool
         method is_slide_joint : bool
-        method joint : Low_level.cpJoint
+        method constr : Low_level.cpConstraint
         method kind : Low_level.cpJointType
       end
+
+
     val reset_shape_id_counter : unit -> unit
     exception Wrong_shape_kind
     class cp_circle_shape :
@@ -581,7 +485,7 @@ module OO :
         method virtual get_elasticity : float
         method virtual get_friction : float
         method virtual get_group : int
-        method virtual get_id : int
+        method virtual get_hashid : int
         method virtual get_layers : int
         method virtual get_poly_shape : cp_poly_shape
         method virtual get_segment_shape : cp_segment_shape
@@ -615,7 +519,7 @@ module OO :
         method get_elasticity : float
         method get_friction : float
         method get_group : int
-        method get_id : int
+        method get_hashid : int
     (** Unique id used as the hash value. *)
         method get_layers : int
         method get_poly_shape : cp_poly_shape
@@ -644,12 +548,12 @@ module OO :
       object
         val space : Low_level.cpSpace
         method add_body : body:cp_body_virt -> unit
-        method add_joint : joint:cp_joint -> unit
         method add_shape : shape:cp_shape_virt -> unit
     (** Add the given shape to the space's active spatial hash. Shapes attached to
         moving bodies should be added here as they will be rehashed on every call
         to [space#step]. *)
         method add_static_shape : shape:cp_shape_virt -> unit
+        method add_constraint : constr:Low_level.cpConstraint -> unit
     (** Add the given shape to the space's static spatial hash. Static shapes are
         only rehashed when [space#rehash_static] is called, so they should not move. *)
         method free : unit
@@ -662,9 +566,9 @@ module OO :
         method rehash_static : unit
     (** Rehash the static spatial hash. *)
         method remove_body : body:cp_body_virt -> unit
-        method remove_joint : joint:cp_joint -> unit
         method remove_shape : shape:cp_shape_virt -> unit
         method remove_static_shape : shape:cp_shape_virt -> unit
+        method remove_constraint : constr:Low_level.cpConstraint -> unit
         method resize_active_hash : dim:float -> count:int -> unit
         method resize_static_hash : dim:float -> count:int -> unit
     (**
@@ -706,18 +610,20 @@ module OO :
       Doing so will use more memory though.
     *)
       end
+
     val damped_spring :
       a:cp_body_virt ->
       b:cp_body_virt ->
       anchr1:Low_level.cpVect ->
       anchr2:Low_level.cpVect ->
-      rlen:float -> k:float -> dmp:float -> dt:float -> unit
+      rest_length:float -> stiffness:float -> damping:float -> Low_level.cpConstraint
 (** Apply a spring force between bodies a and b at anchors anchr1 and anchr2
     respectively. k is the spring constant (force/distance), rlen is the rest
     length of the spring, dmp is the damping constant (force/velocity), and dt
     is the time step to apply the force over. Note: not solving the damping
     forces in the impulse solver causes problems with large damping values. This
     function will eventually be replaced by a new constraint (joint) type. *)
+
   end
 (* }}} end of module OO *)
 
@@ -754,8 +660,8 @@ let get_contact_persistence = get_cp_contact_persistence ;;
     cp_contact_persistence defaults to 3 as it is large enough to help prevent
     oscillating contacts, but doesn't allow stale contact information to be used. *)
 
-let set_joint_bias_coef = set_cp_joint_bias_coef ;;
-let get_joint_bias_coef = get_cp_joint_bias_coef ;;
+let set_joint_bias_coef = set_cp_constraint_bias_coef ;;
+let get_joint_bias_coef = get_cp_constraint_bias_coef ;;
 (**
     Similar to cp_bias_coef, but for joints. Defaults to 0.1. In the future, joints
     might have their own bias coefficient instead. *)
@@ -922,6 +828,7 @@ let to_cp_body ~body =
 
 exception Wrong_joint_kind ;;
 
+(*
 class cp_pin_joint ~joint =
   object
     val pin_joint =
@@ -948,7 +855,9 @@ class cp_pin_joint ~joint =
     method get_j_n_acc = cpPinJointGetJNAcc ~pin_joint
     method get_bias    = cpPinJointGetBias ~pin_joint
   end
+*)
 
+(*
 class cp_slide_joint ~joint =
   object
     val slide_joint =
@@ -979,7 +888,9 @@ class cp_slide_joint ~joint =
     method get_j_bias  = cpSlideJointGetJBias ~slide_joint
     method get_bias    = cpSlideJointGetBias ~slide_joint
   end
+*)
 
+(*
 class cp_pivot_joint ~joint =
   object
     val pivot_joint =
@@ -1006,7 +917,9 @@ class cp_pivot_joint ~joint =
     method get_j_bias  = cpPivotJointGetJBias ~pivot_joint
     method get_bias    = cpPivotJointGetBias ~pivot_joint
   end
+*)
 
+(*
 class cp_groove_joint ~joint =
   object
     val groove_joint =
@@ -1041,6 +954,7 @@ class cp_groove_joint ~joint =
     method get_j_bias  = cpGrooveJointGetJBias ~groove_joint
     method get_bias    = cpGrooveJointGetBias ~groove_joint
   end
+*)
 
 
 (** parameters to create a new [cp_joint]. *)
@@ -1077,21 +991,24 @@ class cp_joint ~a:(_a :cp_body_virt) ~b:(_b :cp_body_virt) ~kind:_kind =
       | PIVOT_JOINT  _ -> CP_PIVOT_JOINT
       | GROOVE_JOINT _ -> CP_GROOVE_JOINT
 
-    val joint =
+    val constr =
       match _kind with
-      | PIN_JOINT    (anchr1, anchr2)            -> cpPinJointNew ~a ~b ~anchr1 ~anchr2
-      | SLIDE_JOINT  (anchr1, anchr2, min, max)  -> cpSlideJointNew ~a ~b ~anchr1 ~anchr2 ~min ~max
+      | PIN_JOINT    (anchr1, anchr2)             -> cpPinJointNew ~a ~b ~anchr1 ~anchr2
+      | SLIDE_JOINT  (anchr1, anchr2, min, max)   -> cpSlideJointNew ~a ~b ~anchr1 ~anchr2 ~min ~max
       | PIVOT_JOINT  (pivot)                      -> cpPivotJointNew ~a ~b ~pivot
       | GROOVE_JOINT (groove_a, groove_b, anchr2) -> cpGrooveJointNew ~a ~b ~groove_a ~groove_b ~anchr2
 
-    method free = cpJointFree ~joint
+    method free = cpConstraintFree ~constr
     method kind = kind
-    method joint = joint
+    method constr = constr
 
+    (*
     method get_pin_joint    = new cp_pin_joint ~joint:self
     method get_slide_joint  = new cp_slide_joint ~joint:self
     method get_pivot_joint  = new cp_pivot_joint ~joint:self
     method get_groove_joint = new cp_groove_joint ~joint:self
+    *)
+    method get_constraint = constr
 
     method is_pin_joint    = (kind = CP_PIN_JOINT)
     method is_slide_joint  = (kind = CP_SLIDE_JOINT)
@@ -1195,7 +1112,7 @@ class virtual cp_shape_virt (_shape:Low_level.cpShape) =
     method virtual set_group : group:int -> unit
     method virtual set_layers : layers:int -> unit
 
-    method virtual get_id : int
+    method virtual get_hashid : int
   end
 (* }}} *)
 
@@ -1257,7 +1174,7 @@ class cp_shape ~body:(_body :cp_body_virt) ~kind:_kind =
     method set_layers = cpShapeSetLayers ~shape
     (** User defined layer bitmask for the shape. *)
 
-    method get_id = cpShapeGetID ~shape
+    method get_hashid = cpShapeGetHashID ~shape
     (** Unique id used as the hash value. *)
   end
 
@@ -1297,7 +1214,7 @@ let to_cp_shape ~shape =
     method get_layers = cpShapeGetLayers ~shape
     method set_layers = cpShapeSetLayers ~shape
 
-    method get_id = cpShapeGetID ~shape
+    method get_hashid = cpShapeGetHashID ~shape
   end
 ;;
 
@@ -1324,12 +1241,12 @@ class cp_space =
     (** Add the given shape to the space's static spatial hash. Static shapes are
         only rehashed when [space#rehash_static] is called, so they should not move. *)
 
-    method add_joint ~(joint:cp_joint)       = cpSpaceAddJoint ~space ~joint:joint#joint
-
     method remove_shape ~(shape:cp_shape_virt) = cpSpaceRemoveShape ~space ~shape:shape#shape
     method remove_static_shape ~(shape:cp_shape_virt) = cpSpaceRemoveStaticShape ~space ~shape:shape#shape
     method remove_body ~(body:cp_body_virt) = cpSpaceRemoveBody ~space ~body:body#body
-    method remove_joint ~(joint:cp_joint) = cpSpaceRemoveJoint ~space ~joint:joint#joint
+
+    method add_constraint ~(constr:cpConstraint) = cpSpaceAddConstraint ~space ~constr
+    method remove_constraint ~(constr:cpConstraint) = cpSpaceRemoveConstraint ~space ~constr
 
     method resize_static_hash  = cpSpaceResizeStaticHash ~space
     method resize_active_hash  = cpSpaceResizeActiveHash ~space
@@ -1392,7 +1309,7 @@ class cp_space =
 
 (* }}} *)
 
-let damped_spring ~(a :cp_body_virt) ~(b :cp_body_virt) = cpDampedSpring ~a:a#body ~b:b#body ;;
+let damped_spring ~(a :cp_body_virt) ~(b :cp_body_virt) = cpDampedSpringNew ~a:a#body ~b:b#body ;;
 (** Apply a spring force between bodies a and b at anchors anchr1 and anchr2
     respectively. k is the spring constant (force/distance), rlen is the rest
     length of the spring, dmp is the damping constant (force/velocity), and dt
@@ -1403,5 +1320,6 @@ end
 #endif
 
 
-(* vim: sw=2 sts=2 ts=2 et fdm=marker filetype=ocaml
+(* fdm=marker *)
+(* vim: sw=2 sts=2 ts=2 et filetype=ocaml
  *)

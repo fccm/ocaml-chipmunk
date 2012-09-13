@@ -602,8 +602,10 @@ let demo7_update ~ticks =
     cpBodyResetForces chassis;
     cpBodyResetForces wheel1;
     cpBodyResetForces wheel2;
+    (* TODO
     cpDampedSpring chassis wheel1 (cpvi(40, 15)) cpvzero 50.0 150.0 10.0 dt;
     cpDampedSpring chassis wheel2 (cpvi(-40, 15)) cpvzero 50.0 150.0 10.0 dt;
+    *)
     
     cpSpaceStep ~space ~dt;
   done;
@@ -630,6 +632,7 @@ let _make_box space ~x ~y =
 
   (body)
 ;;
+
 
 
 let demo7_init() =
@@ -692,28 +695,28 @@ let demo7_init() =
   let body7 = make_box ((cpBodyGetPos body6).cp_x +. 40.)  100. in
   
   let joint = cpPivotJointNew staticBody body1 (cpv((cpBodyGetPos body1).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body1 body2 (cpv((cpBodyGetPos body2).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space  joint;
+  cpSpaceAddConstraint space  joint;
   
   let joint = cpPivotJointNew body2 body3 (cpv((cpBodyGetPos body3).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body3 body4 (cpv((cpBodyGetPos body4).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body4 body5 (cpv((cpBodyGetPos body5).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body5 body6 (cpv((cpBodyGetPos body6).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body6 body7 (cpv((cpBodyGetPos body7).cp_x -. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPivotJointNew body7 staticBody (cpv((cpBodyGetPos body7).cp_x +. 20., 100.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   
   let body1 = make_box (-100.) (50.) in
@@ -729,29 +732,29 @@ let demo7_init() =
   
   let joint = cpSlideJointNew staticBody body1 (cpv((cpBodyGetPos body1).cp_x -. 15. -. 10., 50.))
                                                (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body1 body2 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body2 body3 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body3 body4 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body4 body5 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body5 body6 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body6 body7 (cpvi(15, 0)) (cpvi(-15, 0)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpSlideJointNew body7 staticBody (cpvi(15, 0))
                                                (cpv((cpBodyGetPos body7).cp_x +. 15. +. 10., 50.)) min max in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let body1 = make_box (-100.) 150. in
   let body2 = make_box ((cpBodyGetPos body1).cp_x +. 40.) 150. in
@@ -763,32 +766,32 @@ let demo7_init() =
   
   let joint = cpPinJointNew staticBody body1 (cpv((cpBodyGetPos body1).cp_x -. 15. -. 10., 150.))
                                              (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body1 body2 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body2 body3 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body3 body4 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body4 body5 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body5 body6 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body6 body7 (cpvi(15, 0)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let joint = cpPinJointNew body7 staticBody (cpvi(15, 0)) (cpv((cpBodyGetPos body7).cp_x +. 15. +. 10., 150.)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let body1 = make_box 190. 200. in
   let joint = cpGrooveJointNew staticBody body1 (cpvi(0, 195)) (cpvi(250, 200)) (cpvi(-15, 0)) in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   let verts = [|
     cpvi(-20,-15);
@@ -824,7 +827,7 @@ let demo7_init() =
   shapes_li := shape :: !shapes_li;
   
   let joint = cpPinJointNew chassis wheel1 cpvzero cpvzero in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
   
   
   let wheel2 = cpBodyNew wheel_mass (cpMomentForCircle wheel_mass 0.0 (float radius) cpvzero) in
@@ -839,7 +842,7 @@ let demo7_init() =
   shapes_li := shape :: !shapes_li;
 
   let joint = cpPinJointNew chassis wheel2 cpvzero cpvzero in
-  cpSpaceAddJoint space joint;
+  cpSpaceAddConstraint space joint;
 ;;
 
 (* }}} end of demo 7 *)

@@ -56,7 +56,7 @@ cpShape shape {
         Layers( int layers ),
 
 // Unique id used as the hash value.
-        ID( int_readonly id ),
+        HashID( cpHashValue hashid ),
 };
 
 
@@ -94,7 +94,7 @@ cpPolyShape poly {
 
 
 cpPinJoint pin_joint {
-//      cpJoint joint;
+//      cpConstraint constraint;
         Anchor1( cpVect anchr1 ),
         Anchor2( cpVect anchr2 ),
         Dist( cpFloat dist),
@@ -105,7 +105,7 @@ cpPinJoint pin_joint {
         NMass( cpFloat nMass ),
 
         JNAcc( cpFloat jnAcc ),
-        JBias( cpFloat jBias ),
+        JNMax( cpFloat jnMax ),
         Bias( cpFloat bias ),
 };
 
@@ -123,7 +123,7 @@ cpSlideJoint slide_joint {
         NMass( cpFloat nMass ),
         
         JNAcc( cpFloat jnAcc ),
-        JBias( cpFloat jBias ),
+        JNMax( cpFloat jnMax ),
         Bias( cpFloat bias ),
 };
 
@@ -140,7 +140,7 @@ cpPivotJoint pivot_joint {
         K2( cpVect k2 ),
 
         JAcc( cpVect jAcc ),
-        JBias( cpVect jBias ),
+        JMaxLen( cpFloat jMaxLen ),
         Bias( cpVect bias ),
 };
 
@@ -162,7 +162,7 @@ cpGrooveJoint groove_joint {
         K2( cpVect k2 ),
 
         JAcc( cpVect jAcc ),
-        JBias( cpVect jBias ),
+        JMaxLen( cpFloat jMaxLen ),
         Bias( cpVect bias ),
 };
 
@@ -198,19 +198,28 @@ cpContact cp_contact {
 cpArbiter arbiter {
 // Information on the contact points between the objects.
         NumContacts( int numContacts ),
-//      Contacts( cpContactArray contacts ),
+//      cpContact *contacts;
 
 // The two shapes involved in the collision.
-        A( cpShape a ),
-        B( cpShape b ),
+// These variables are NOT in the order defined by the collision handler.
+        PA( cpShape private_a ),
+        PB( cpShape private_b ),
 
-// Calculated by cpArbiterPreStep().
+// Calculated before calling the pre-solve collision handler
+// Override them with custom values if you want specialized behavior
+        E( cpFloat e ),
         U( cpFloat u ),
-//      E( cpFloat e ),
-        TargetV( cpVect target_v ),
+// Used for surface_v calculations, implementation may change
+        Surface_vr( cpVect surface_vr),
 
 // Time stamp of the arbiter. (from cpSpace)
         Stamp( int stamp ),
+
+//      struct cpCollisionHandler *handler;
+
+// Are the shapes swapped in relation to the collision handler?
+        SwappedColl( char swappedColl ),
+        State( char state ),
 };
 
 

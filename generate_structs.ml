@@ -15,6 +15,7 @@ type t = {
 exception Not_used ;;
 
 let conv_ml_to_c = function
+  | "char"
   | "int" -> (fun () -> "", "Int_val(val)")
   | "cpFloat"
   | "float" -> (fun () -> "", "Double_val(val)")
@@ -24,21 +25,25 @@ let conv_ml_to_c = function
         _val.y = Double_field(val,1);\n", "_val")
 
   (* Read only members *)
-  | "int_readonly" -> (fun () -> raise Not_used)
-  | "cpArray" -> (fun () -> raise Not_used)
-  | "cpShape" -> (fun () -> raise Not_used)
-  | "cpVectArray" -> (fun () -> raise Not_used)
+  | "int_readonly"
+  | "cpArray"
+  | "cpShape"
+  | "cpVectArray"
+  | "cpHashValue" ->
+      (fun () -> raise Not_used)
   | unknown -> invalid_arg unknown
 ;;
 
 
 let conv_c_to_ml ml_type str = match ml_type with
+  | "char"
   | "int" -> ("return Val_int(", ");")
   | "int_readonly" -> ("return Val_int(", ");")
   | "cpFloat"
   | "float" -> ("return caml_copy_double(", ");")
   | "cpArray" -> ("return (value) ", ";")
   | "cpShape" -> ("return (value) ", ";")
+  | "cpHashValue" -> ("return Val_cpHashValue(", ");")
   | "cpVect" -> ("\
         CAMLparam0();
         CAMLlocal1( ml_ret );
@@ -78,6 +83,7 @@ let conv_c_to_ml ml_type str = match ml_type with
 
 let get_ml_type t = match t with
   | "int"
+  | "char"
   | "float"
   | "cpShape"
   | "cpArray"
@@ -85,6 +91,7 @@ let get_ml_type t = match t with
   | "cpVectArray" -> t
   | "cpFloat" -> "float"
   | "int_readonly" -> "int"
+  | "cpHashValue" -> "int"
   | other ->
       Printf.fprintf stderr "Warning: ml type not recognised: %s" other;
       (other)
