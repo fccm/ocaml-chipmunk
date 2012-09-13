@@ -29,8 +29,6 @@ open GL
 open Glu
 open Glut
 
-#directory "+chipmunk"
-#load "chipmunk.cma"
 open Chipmunk
 open Low_level
 open OO
@@ -52,6 +50,31 @@ let get_global g = match !g with Some v -> v | None -> raise Exit ;;
 let cpvzero = cpvzero() ;;
 let pi = 4.0 *. atan 1.0 ;;
 
+let cpCircleShapeNew body radius offset =
+  (CP_CIRCLE_SHAPE, cpCircleShapeNew body radius offset)
+
+let cpPolyShapeNew body verts offset =
+  (CP_POLY_SHAPE, cpPolyShapeNew body verts offset)
+
+let cpSegmentShapeNew body a b radius =
+  (CP_SEGMENT_SHAPE, cpSegmentShapeNew body a b radius)
+
+let cpShapeSetElasticity (_,shape) e =
+  cpShapeSetElasticity shape e
+
+let cpShapeSetFriction (_,shape) f =
+  cpShapeSetFriction shape f
+
+let cpShapeSetCollisionType (_,shape) c =
+  cpShapeSetCollisionType shape c
+
+let cpSpaceAddShape space (_,shape) =
+  cpSpaceAddShape space shape
+
+let cpSpaceAddStaticShape space (_,shape) =
+  cpSpaceAddStaticShape space shape
+
+
 (* {{{ Demo 1 *)
 
 let demo1_update ~ticks =
@@ -72,7 +95,6 @@ let demo1_init() =
 
   cpResetShapeIdCounter();
   let space = cpSpaceNew() in
-  cpSpaceResizeStaticHash space 20.0 999;
   cpSpaceSetGravity space (cpvi(0, -100));
   _space := Some space;
   
@@ -156,8 +178,6 @@ let demo2_init() =
   _space := Some space;
 
   cpSpaceSetIterations space 20;
-  cpSpaceResizeStaticHash space 40.0 1000;
-  cpSpaceResizeActiveHash space 40.0 1000;
   cpSpaceSetGravity space (cpv(0., -100.));
   
   
@@ -253,9 +273,6 @@ let demo3_init() =
 	cpSpaceSetGravity space (cpvi(0, -100));
   _space := Some space;
 	
-	cpSpaceResizeStaticHash space 40.0 999;
-	cpSpaceResizeActiveHash space 30.0 2999;
-	
   let rec make_verts acc i =
     if i >= num_verts then Array.of_list(List.rev acc)
     else begin
@@ -317,7 +334,6 @@ let demo4_update ~ticks =
   for i=0 to pred steps do
     cpSpaceStep ~space ~dt;
     cpBodyUpdatePosition staticBody dt;
-    cpSpaceRehashStatic ~space;
   done
 ;;
 
@@ -328,8 +344,6 @@ let demo4_init() =
   cpResetShapeIdCounter();
   let space = cpSpaceNew() in
   _space := Some space;
-  cpSpaceResizeActiveHash space  30.0  999;
-  cpSpaceResizeStaticHash space  200.0  99;
 
   cpSpaceSetGravity ~space ~gravity:(cpv(0., -600.));
   
@@ -354,7 +368,7 @@ let demo4_init() =
     let shape = cpSegmentShapeNew staticBody pt1 pt2 0.0 in
     cpShapeSetElasticity shape 1.0;
     cpShapeSetFriction shape 1.0;
-    cpSpaceAddStaticShape ~space ~shape;
+    cpSpaceAddStaticShape space shape;
 
     shapes_li := shape :: !shapes_li;
   in
@@ -403,8 +417,6 @@ let demo5_init() =
   cpResetShapeIdCounter();
   let space = cpSpaceNew() in
   cpSpaceSetIterations space 20;
-  cpSpaceResizeActiveHash space 40.0 2999;
-  cpSpaceResizeStaticHash space 40.0 999;
   cpSpaceSetGravity space (cpvi(0, -300));
   _space := Some space;
   
@@ -512,7 +524,6 @@ let demo6_init() =
   
   cpResetShapeIdCounter();
   let space = cpSpaceNew() in
-  cpSpaceResizeStaticHash space 20.0 999;
   cpSpaceSetGravity space (cpvi(0, -100));
   _space := Some space;
   
@@ -642,8 +653,6 @@ let demo7_init() =
   cpResetShapeIdCounter();
   let space = cpSpaceNew() in
   cpSpaceSetIterations space 10;
-  cpSpaceResizeActiveHash space 50.0 999;
-  cpSpaceResizeStaticHash space 50.0 999;
   cpSpaceSetGravity space (cpvi(0, -300));
   _space := Some space;
 
@@ -854,7 +863,6 @@ let demo_destroy() =
   let space = get_global _space
   and staticBody = get_global _staticBody in
   
-  cpSpaceFreeChildren ~space;
   cpSpaceFree ~space;
   
   cpBodyFree staticBody;
@@ -980,27 +988,30 @@ let drawBB ~body ~bb =
 ;;
 
 
-let drawObject shape =
+let drawObject (shape_kind, shape) =
   if draw_bounding_box then
     drawBB (cpShapeGetBody shape) (cpShapeGetBB shape);
 
   glLineWidth 2.0;
-  match cpShapeGetType shape with
+  match shape_kind with
   | CP_CIRCLE_SHAPE -> drawCircleShape ~shape;
   | CP_SEGMENT_SHAPE -> drawSegmentShape ~shape;
   | CP_POLY_SHAPE -> drawPolyShape ~shape;
   | _ ->
-      Printf.printf("Bad enumeration in drawObject().\n");
+      Printf.printf "Bad enumeration in drawObject().\n";
 ;;
 
 
 let drawCollisions arbiter =
+  (*
   let arb_arr = cpArbiterGetContacts ~arbiter in
 
   Array.iter (fun contact ->
       let v = cpContactGetP contact in
       glVertex2  v.cp_x  v.cp_y;
     ) arb_arr;
+  *)
+  ()
 ;;
 
 (* }}} *)
@@ -1010,8 +1021,6 @@ let display() =
   
   List.iter drawObject !shapes_li;
   
-  let space = get_global _space in
-  
   glBegin GL_POINTS;
     glColor3 0.0 0.0 1.0;
     List.iter (fun body ->
@@ -1020,8 +1029,11 @@ let display() =
       ) !bodies_li;
 
     glColor3 1.0 0.0 0.0;
+    (*
+    let space = get_global _space in
     let arbiters = cpSpaceGetArbiters space in
     Array.iter drawCollisions  arbiters;
+    *)
   glEnd();
   
   glutSwapBuffers();

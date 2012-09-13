@@ -1,48 +1,15 @@
 
 cpBody body {
-        Mass( float m ),
         MassInverse( float m_inv ),
-        Moment( float i ),
         MomentInverse( float i_inv ),
-
-        Pos( cpVect p ),
-        Vel( cpVect v ),
-        Force( cpVect f ),
-        VelBias( cpVect v_bias ),
-
-        Angle( float a ),
-        AVel( float w ),
-        Torque( float t ),
-        AVelBias( float w_bias ),
-
-        Rot( cpVect rot ),
 
         VelLim( float v_limit ),
         AngVelLim( float w_limit ),
 };
 
 
-cpSpace space {
-        Iterations( int iterations ),
-
-        Gravity( cpVect gravity ),
-        Damping( float damping ),
-
-        ElasticIterations( int elasticIterations ),
-
-        Stamp( int_readonly stamp ),
-
+//cpSpace space {
 //      Bodies( cpArray bodies ),
-};
-
-
-// Seems that the author would be willing to make
-// this structure disappear in futur versions.
-//
-//cpArray cp_array {
-//      Num( int num ),
-//      Max( int max ),
-//      void **arr;
 //};
 
 
@@ -57,9 +24,6 @@ cpShape shape {
         Group( int group ),
 // User defined layer bitmask for the shape.
         Layers( int layers ),
-
-// Unique id used as the hash value.
-        HashID( cpHashValue hashid ),
 };
 
 
@@ -170,43 +134,10 @@ cpGrooveJoint groove_joint {
 };
 
 
-// Data structure for contact points.
-cpContact cp_contact {
-// Contact point and normal.
-        P( cpVect p ),
-        N( cpVect n ),
-// Penetration distance.
-        Dist( cpFloat dist ),
-
-// Calculated by cpArbiterPreStep().
-        R1( cpVect r1 ),
-        R2( cpVect r2 ),
-        NMass( cpFloat nMass ),
-        TMass( cpFloat tMass ),
-        Bounce( cpFloat bounce ),
-
-// Persistant contact information.
-        JNAcc( cpFloat jnAcc ),
-        JTAcc( cpFloat jtAcc ),
-        JBias( cpFloat jBias ),
-        Bias( cpFloat bias ),
-
-// Hash value used to (mostly) uniquely identify a contact.
-//      unsigned int hash;
-        Hash( int hash ),
-};
-
 
 // Data structure for tracking collisions between shapes.
 cpArbiter arbiter {
 // Information on the contact points between the objects.
-        NumContacts( int numContacts ),
-//      cpContact *contacts;
-
-// The two shapes involved in the collision.
-// These variables are NOT in the order defined by the collision handler.
-        PA( cpShape a ),
-        PB( cpShape b ),
 
 // Calculated before calling the pre-solve collision handler
 // Override them with custom values if you want specialized behavior
@@ -215,14 +146,7 @@ cpArbiter arbiter {
 // Used for surface_v calculations, implementation may change
         Surface_vr( cpVect surface_vr),
 
-// Time stamp of the arbiter. (from cpSpace)
-        Stamp( int stamp ),
-
 //      struct cpCollisionHandler *handler;
-
-// Are the shapes swapped in relation to the collision handler?
-        SwappedColl( char swappedColl ),
-        State( char state ),
 };
 
 

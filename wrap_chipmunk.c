@@ -1,33 +1,38 @@
 /* {{{ COPYING 
 
-  +-----------------------------------------------------------------------+
-  |  This file is part of a binding for OCaml to the Chipmunk library.    |
-  +-----------------------------------------------------------------------+
-  |  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>   |
-  +-----------------------------------------------------------------------+
-  |  This program is free software: you can redistribute it and/or        |
-  |  modify it under the terms of the GNU General Public License          |
-  |  as published by the Free Software Foundation, either version 3       |
-  |  of the License, or (at your option) any later version.               |
-  |                                                                       |
-  |  This program is distributed in the hope that it will be useful,      |
-  |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-  |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-  |  GNU General Public License for more details.                         |
-  |                                                                       |
-  |  You should have received a copy of the GNU General Public License    |
-  |  along with this program.  If not, see <http://www.gnu.org/licenses/> |
-  +-----------------------------------------------------------------------+
+  This file is part of a binding for OCaml to the Chipmunk library.
+
+  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a
+  copy of this software and associated documentation files (the "Software"),
+  to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  The Software is provided "as is", without warranty of any kind, express or
+  implied, including but not limited to the warranties of merchantability,
+  fitness for a particular purpose and noninfringement. In no event shall
+  the authors or copyright holders be liable for any claim, damages or other
+  liability, whether in an action of contract, tort or otherwise, arising
+  from, out of or in connection with the software or the use or other dealings
+  in the Software.
 
 }}} */
 
-#define CP_USE_DEPRECATED_API_4 1
+//define CP_USE_DEPRECATED_API_4 1
 #include <chipmunk/chipmunk.h>
 #include <caml/mlvalues.h>
 #include <caml/alloc.h>
 #include <caml/memory.h>
 #include <caml/callback.h>
 #include <caml/fail.h>
+
+#include "wrap_chipmunk.h"
 
 // {{{ chipmunk.h 
 
@@ -40,55 +45,15 @@ ml_cpInitChipmunk( value unit )
 
 
 CAMLprim value
-ml_set_cp_bias_coef( value ml_cp_bias_coef )
+get_chipmunk_compile_version( value unit )
 {
-    cp_bias_coef = Double_val(ml_cp_bias_coef);
-    return Val_unit;
-}
-
-CAMLprim value
-ml_get_cp_bias_coef( value unit )
-{
-    return caml_copy_double(cp_bias_coef);
-}
-
-CAMLprim value
-ml_set_cp_collision_slop( value ml_cp_collision_slop )
-{
-    cp_collision_slop = Double_val(ml_cp_collision_slop);
-    return Val_unit;
-}
-
-CAMLprim value
-ml_get_cp_collision_slop( value unit )
-{
-    return caml_copy_double(cp_collision_slop);
-}
-
-CAMLprim value
-ml_set_cp_constraint_bias_coef( value ml_cp_constraint_bias_coef )
-{
-    cp_constraint_bias_coef = Double_val(ml_cp_constraint_bias_coef);
-    return Val_unit;
-}
-
-CAMLprim value
-ml_get_cp_constraint_bias_coef( value unit )
-{
-    return caml_copy_double(cp_constraint_bias_coef);
-}
-
-CAMLprim value
-ml_set_cp_contact_persistence( value ml_cp_contact_persistence )
-{
-    cp_contact_persistence = Int_val(ml_cp_contact_persistence);
-    return Val_unit;
-}
-
-CAMLprim value
-ml_get_cp_contact_persistence( value unit )
-{
-    return Val_int(cp_contact_persistence);
+    CAMLparam0();
+    CAMLlocal1( ml_version );
+    ml_version = caml_alloc(3, 0);
+    Store_field( ml_version, 0, Val_int(CP_VERSION_MAJOR) );
+    Store_field( ml_version, 1, Val_int(CP_VERSION_MINOR) );
+    Store_field( ml_version, 2, Val_int(CP_VERSION_RELEASE) );
+    CAMLreturn( ml_version );
 }
 
 
@@ -123,6 +88,24 @@ ml_cpMomentForPoly( value m, value ml_verts, value ml_offset )
     return caml_copy_double(inertia);
 }
 
+
+CAMLprim value
+ml_cpAreaForPoly( value ml_verts )
+{
+    int i;
+    int numVerts = Wosize_val(ml_verts);
+    cpVect verts[numVerts];
+
+    for(i=0; i<numVerts; i++) {
+        verts[i].x = Double_field(Field(ml_verts,i),0);
+        verts[i].y = Double_field(Field(ml_verts,i),1);
+    }
+
+    cpFloat r = cpAreaForPoly( numVerts, verts );
+    return caml_copy_double(r);
+}
+
+
 // }}}
 // {{{ cpBody.h 
 
@@ -131,7 +114,7 @@ CAMLprim value
 ml_cpBodyNew( value m, value i )
 {
     cpBody *body = cpBodyNew( Double_val(m), Double_val(i) );
-    return (value)body;
+    return Val_cpBody(body);
 }
 
 // }}}
@@ -153,12 +136,10 @@ void dump_cpBody( cpBody *body )
     printf("  position: %g %g\n", body->p.x, body->p.y );
     printf("  velocity: %g %g\n", body->v.x, body->v.y );
     printf("  force: %g %g\n", body->f.x, body->f.y );
-    printf("  vel bias: %g %g\n", body->v_bias.x, body->v_bias.y );
 
     printf("  angle: %g\n", body->a );
     printf("  angular velocity: %g\n", body->w );
     printf("  torque: %g\n", body->t );
-    printf("  angular vel bias: %g\n", body->w_bias );
 
     printf("  unit length rot: %g %g\n", body->rot.x, body->rot.y );
     printf("}\n");
@@ -168,7 +149,7 @@ void dump_cpBody( cpBody *body )
 CAMLprim value
 ml_cpBodyDump( value body )
 {
-    dump_cpBody( (cpBody *)body );
+    dump_cpBody( cpBody_val(body) );
     return Val_unit;
 }
 
@@ -198,7 +179,10 @@ void dump_cpSpace( cpSpace *space )
     printf("  iterations: %d\n", space->iterations );
     printf("  gravity: x, y = %g %g\n", space->gravity.x, space->gravity.y );
     printf("  damping: %g\n", space->damping );
-    printf("  stamp: %d\n", space->stamp );
+    printf("  idleSpeedThreshold: %g\n", space->idleSpeedThreshold );
+    printf("  sleepTimeThreshold: %g\n", space->sleepTimeThreshold );
+    printf("  collisionSlop: %g\n", space->collisionSlop );
+    printf("  collisionBias: %g\n", space->collisionBias );
     printf("}\n");
     fflush(stdout);
 }
@@ -206,7 +190,7 @@ void dump_cpSpace( cpSpace *space )
 CAMLprim value
 ml_cpSpaceDump( value space )
 {
-    dump_cpSpace( (cpSpace *)space );
+    dump_cpSpace( cpSpace_val(space) );
     return Val_unit;
 }
 
@@ -225,7 +209,7 @@ ml_cpSegmentShapeNew( value body, value ml_a, value ml_b, value r )
     b.x = Double_field(ml_b,0);
     b.y = Double_field(ml_b,1);
 
-    cpShape* shape = cpSegmentShapeNew( (cpBody *)body, a, b, Double_val(r) );
+    cpShape* shape = cpSegmentShapeNew( cpBody_val(body), a, b, Double_val(r) );
 
     CAMLreturn( (value)shape );
 }
@@ -247,7 +231,7 @@ ml_cpPolyShapeNew( value body, value ml_verts, value ml_offset )
     offset.x = Double_field(ml_offset,0);
     offset.y = Double_field(ml_offset,1);
 
-    cpShape *shape = cpPolyShapeNew( (cpBody *)body, numVerts, verts, offset );
+    cpShape *shape = cpPolyShapeNew( cpBody_val(body), numVerts, verts, offset );
     return (value) shape;
 }
 
@@ -259,7 +243,7 @@ ml_cpCircleShapeNew( value body, value radius, value ml_offset )
     offset.x = Double_field(ml_offset,0);
     offset.y = Double_field(ml_offset,1);
 
-    cpShape *shape = cpCircleShapeNew( (cpBody *)body, Double_val(radius), offset );
+    cpShape *shape = cpCircleShapeNew( cpBody_val(body), Double_val(radius), offset );
     return (value) shape;
 }
 
@@ -297,6 +281,7 @@ static const cpShapeType shape_type_table[] = {
         CP_NUM_SHAPES
 };
 
+/* TODO
 CAMLprim value
 ml_cpShapeGetType(value shape)
 {
@@ -310,6 +295,7 @@ ml_cpShapeGetType(value shape)
     }
     return Val_int(i);
 }
+*/
 
 CAMLprim value
 ml_cpShapeGetBB(value shape)
@@ -344,39 +330,25 @@ ml_cpBBFree( value ml_bb )
 
 
 CAMLprim value
-ml_cpBBintersects( cpBB * a, cpBB * b )
+ml_cpBBIntersects( value a, value b )
 {
-    if (a->l<=b->r && b->l<=a->r && a->b<=b->t && b->b<=a->t)
-        return Val_true;
-    else
-        return Val_false;
-}
-/*
-CAMLprim value
-ml_cpBBintersects( value a, value b )
-{
-    if (cpBBintersects( *((cpBB *)a), *((cpBB *)b) )) return Val_true; else return Val_false;
-}
-*/
-
-CAMLprim value
-ml_cpBBcontainsBB( cpBB * bb, cpBB * other )
-{
-    //if (cpBBcontainsBB( *((cpBB *)bb), *((cpBB *)other) )) return Val_true; else return Val_false;
-    if (bb->l < other->l && bb->r > other->r && bb->b < other->b && bb->t > other->t)
-        return Val_true;
-    else
-        return Val_false;
+    if (cpBBIntersects( *((cpBB *)a), *((cpBB *)b) )) return Val_true; else return Val_false;
 }
 
 CAMLprim value
-ml_cpBBcontainsVect( value bb, value ml_v )
+ml_cpBBContainsBB( value bb, value other )
+{
+    if (cpBBContainsBB( *((cpBB *)bb), *((cpBB *)other) )) return Val_true; else return Val_false;
+}
+
+CAMLprim value
+ml_cpBBContainsVect( value bb, value ml_v )
 {
     cpVect v;
     v.x = Double_field(ml_v,0);
     v.y = Double_field(ml_v,1);
 
-    if (cpBBcontainsVect( *((cpBB *)bb), v )) return Val_true; else return Val_false;
+    if (cpBBContainsVect( *((cpBB *)bb), v )) return Val_true; else return Val_false;
 }
 
 CAMLprim value
@@ -425,7 +397,7 @@ CAMLprim value
 ml_cpSpaceNew( value unit )
 {
     cpSpace* space = cpSpaceNew();
-    return (value)space;
+    return Val_cpSpace(space);
 }
 
 // }}}
@@ -433,94 +405,34 @@ ml_cpSpaceNew( value unit )
 
 
 CAMLprim value
-ml_cpSpaceGetArbiters( value space )
-{
-    CAMLparam1( space );
-    CAMLlocal1( ml_array );
-    int i;
-
-    cpArray *arr = ((cpSpace *)space)->arbiters;
-
-    ml_array = caml_alloc(arr->num, 0);
-
-    for(i=0; i < arr->num; i++)
-    {
-        // (cpArbiter *) arr->arr[i];
-
-        Store_field( ml_array, i, (value) arr->arr[i] );
-    }
-
-    CAMLreturn( ml_array );
-}
-
-/*
-CAMLprim value
-ml_cpArbiterGetShapeA( value arbiter )
-{
-    cpArbiter * arb;
-    cpShape *_a;
-    arb = (cpArbiter *) arbiter;
-
-    if (arb->a == NULL) {
-        caml_failwith("Arbiter has no shape a");
-    }
-
-    _a = arb->a;
-
-    return (value) _a;
-}
-
-
-CAMLprim value
-ml_cpArbiterGetShapeB( value arbiter )
-{
-    cpArbiter * arb;
-    cpShape *_b;
-    arb = (cpArbiter *) arbiter;
-
-    if (arb->b == NULL) {
-        caml_failwith("Arbiter has no shape b");
-    }
-
-    _b = arb->b;
-
-    return (value) _b;
-}
-*/
-
-CAMLprim value
 ml_cpArbiterGetShapePA( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->a);
+    cpShape *a, *b;
+    cpArbiterGetShapes(((cpArbiter *) arbiter), &a, &b);
+    return Val_cpShape(a);
 }
 
 CAMLprim value
 ml_cpArbiterGetShapePB( value arbiter )
 {
-    return (value) (((cpArbiter *) arbiter)->b);
+    cpShape *a, *b;
+    cpArbiterGetShapes(((cpArbiter *) arbiter), &a, &b);
+    return Val_cpShape(b);
 }
 
-
 CAMLprim value
-ml_cpArbiterGetContacts( value arbiter )
+ml_cpArbiterGetShapes( value arbiter )
 {
     CAMLparam1( arbiter );
-    CAMLlocal1( ml_array );
-    int i, num_c;
+    CAMLlocal1( ml_shapes );
 
-    cpArbiter *arb = (cpArbiter *) arbiter;
-    num_c = arb->numContacts;
+    cpShape *a, *b;
+    cpArbiterGetShapes(((cpArbiter *) arbiter), &a, &b);
 
-    ml_array = caml_alloc(num_c, 0);
-
-    for(i=0; i < num_c; i++)
-    {
-        // (cpContact *) arb->contacts[i]
-
-        Store_field( ml_array, i, (value) &(arb->contacts[i]) );
-    }
-
-    CAMLreturn( ml_array );
+    ml_shapes = caml_alloc(2, 0);
+    Store_field( ml_shapes, 0, (value) a );
+    Store_field( ml_shapes, 1, (value) b );
+    CAMLreturn( ml_shapes );
 }
 
 // }}}
@@ -536,5 +448,4 @@ Val_cpHashValue( cpHashValue v )
 
 #include "wrap_chipmunk.gen.c"
 
-// vim: sw=4 sts=4 ts=4 et
-// fdm=marker
+// vim: sw=4 sts=4 ts=4 et fdm=marker

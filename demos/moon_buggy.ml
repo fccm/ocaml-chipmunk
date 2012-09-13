@@ -31,12 +31,9 @@ open GL
 open Glu
 open Glut
 
-#directory "+chipmunk"
-#load "chipmunk.cma"
-
-open Chipmunk ;;
-open Low_level ;;
-open OO ;;
+open Chipmunk
+open Low_level
+open OO
 
 (* NOTE: if you haven't read the Chipmunk documentation, you might want to
    do that now. The tutorial doesn't assume that you've read the entire API,
@@ -120,17 +117,6 @@ let moonBuggy_init() =
      set the gravity. *)
   space#set_gravity (cpv 0.0 (-900.0));
 
-  (* This step is optional. While you don't have to resize the spatial
-  hashes, doing so can greatly increase the speed of the collision
-  detection. The first number should be the expected average size of
-  the objects you are going to have, the second number is related to
-  the number of objects you are putting. In general, if you have more
-  objects, you want the number to be bigger, but only to a
-  point. Finding good numbers to use here is largely going to be guess
-  and check. *)
-  space#resize_static_hash 50.0 2000;
-  space#resize_active_hash 50.0 100;
-
   (* This is the rigid body that we will be attaching our ground line
      segments to. We don't want it to move, so we give it an infinite
      mass and moment of inertia. We also aren't going to add it to our
@@ -152,7 +138,7 @@ let moonBuggy_init() =
          (the line segments) to our static, non-moving body that we've
          created. *)
       let seg = new cp_shape staticBody (SEGMENT_SHAPE(a, b, 0.0)) in
-      static_shapes_li := seg :: !static_shapes_li;
+      static_shapes_li := (CP_SEGMENT_SHAPE, seg) :: !static_shapes_li;
 
       (* After you create a shape, you'll probably want to set some of
          it's properties. Possibilities include elasticity (e), surface
@@ -255,14 +241,14 @@ let moonBuggy_init() =
   shape#set_friction 0.5;
   space#add_shape shape;
 
-  active_shapes_li := shape :: !active_shapes_li;
+  active_shapes_li := (CP_POLY_SHAPE, shape) :: !active_shapes_li;
 
   (* Now we create some shapes for the wheels *)
   let shape = new cp_shape wheel1 (CIRCLE_SHAPE(wheel_radius, cpvzero)) in
   shape#set_friction 1.5;
   space#add_shape shape;
 
-  active_shapes_li := shape :: !active_shapes_li;
+  active_shapes_li := (CP_CIRCLE_SHAPE, shape) :: !active_shapes_li;
 
   let shape = new cp_shape wheel2 (CIRCLE_SHAPE(wheel_radius, cpvzero)) in
   shape#set_friction 1.5;
@@ -277,7 +263,7 @@ let moonBuggy_init() =
   space#add_constraint constr1;
   space#add_constraint constr2;
 
-  active_shapes_li := shape :: !active_shapes_li;
+  active_shapes_li := (CP_CIRCLE_SHAPE, shape) :: !active_shapes_li;
 ;;
 
 
@@ -394,25 +380,28 @@ let drawPolyShape ~shape =
 ;;
 
 
-let drawObject ~obj:shape ~data =
-  match shape#kind with
-  | CP_CIRCLE_SHAPE -> drawCircleShape(shape);
-  | CP_SEGMENT_SHAPE -> drawSegmentShape(shape);
-  | CP_POLY_SHAPE -> drawPolyShape(shape);
+let drawObject (shape_kind, shape) =
+  match shape_kind with
+  | CP_CIRCLE_SHAPE -> drawCircleShape shape
+  | CP_SEGMENT_SHAPE -> drawSegmentShape shape
+  | CP_POLY_SHAPE -> drawPolyShape shape
   | _ ->
-      Printf.printf("Bad enumeration in drawObject().\n");
+      Printf.printf "Bad enumeration in drawObject().\n";
 ;;
 
 (* }}} *)
 
 
-let drawCollisions ~obj:arbiter ~data =
+let drawCollisions ~obj:arbiter =
+  (*
   let arb_arr = (get_arbiter_contacts ~arbiter) in
 
   Array.iter (fun contact ->
       let v = cpContactGetP contact in
       glVertex2  v.cp_x  v.cp_y;
     ) arb_arr;
+  *)
+  ()
 ;;
 
 
@@ -425,12 +414,10 @@ let display() =
   glLoadIdentity();
   glTranslate x y 0.0;
 
-  let space = get_global _space in
-
   glColor3 0.0 0.0 0.0;
 
-  List.iter (fun shape -> drawObject  shape None) !static_shapes_li;
-  List.iter (fun shape -> drawObject  shape None) !active_shapes_li;
+  List.iter drawObject !static_shapes_li;
+  List.iter drawObject !active_shapes_li;
 
   let bodies = !active_bodies_li in
 
@@ -443,8 +430,11 @@ let display() =
       ) bodies;
 
     glColor3 1.0 0.0 0.0;
+    (*
+    let space = get_global _space in
     let arbiters = space#get_arbiters  in
-    Array.iter (fun arb -> drawCollisions ~obj:arb ~data:None) arbiters;
+    Array.iter (fun arb -> drawCollisions ~obj:arb) arbiters;
+    *)
   glEnd();
 
   glutSwapBuffers();
@@ -461,15 +451,12 @@ let keyboard ~key ~x ~y =
       active_shapes_li := [];
       active_bodies_li := [];
       let space = get_global _space in
-      (* with free_children, no need to use this:
-      List.iter (fun shape -> shape#free) !static_shapes_li;
-      List.iter (fun shape -> shape#free) !active_shapes_li;
+      List.iter (fun (_, shape) -> shape#free) !static_shapes_li;
+      List.iter (fun (_, shape) -> shape#free) !active_shapes_li;
       List.iter (fun body -> body#free) !active_bodies_li;
-      *)
       (* frees associated static/active shapes, 
          also active bodies,                                         
          but not static bodies. *)
-      space#free_children;
       space#free;
       let staticBody = get_global _staticBody in
       staticBody#free;

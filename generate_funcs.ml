@@ -4,18 +4,23 @@
   Code generator for wrapping C functions to OCaml.
   Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>
 
-  This program is free software: you can redistribute it and/or
-  modify it under the terms of the GNU General Public License
-  as published by the Free Software Foundation, either version 3
-  of the License, or (at your option) any later version.
+  Permission is hereby granted, free of charge, to any person obtaining a
+  copy of this software and associated documentation files (the "Software"),
+  to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
 
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see  <http://www.gnu.org/licenses/>
+  The Software is provided "as is", without warranty of any kind, express or
+  implied, including but not limited to the warranties of merchantability,
+  fitness for a particular purpose and noninfringement. In no event shall
+  the authors or copyright holders be liable for any claim, damages or other
+  liability, whether in an action of contract, tort or otherwise, arising
+  from, out of or in connection with the software or the use or other dealings
+  in the Software.
 
 )* }}} *)
 #load "str.cma"
@@ -109,11 +114,20 @@ let prepare_arg ((arg_type, pointer), arg_name) =
         from_ml= arg_name;
         at_call= Printf.sprintf "Double_val(%s)" arg_name;
         prev_conv= "" }
-  | _, "*" ->
+  | "cpSpace", "*"
+  | "cpBody", "*"
+  | "cpShape", "*"
+  | "cpConstraint", "*" ->
       { arg_name= arg_name ^":";
         ml_type= arg_type;
         from_ml= arg_name;
-        at_call= Printf.sprintf "(%s *) %s" arg_type arg_name;
+        at_call= Printf.sprintf "%s_val(%s)" arg_type arg_name;
+        prev_conv= "" }
+  | "cpBool", "" ->
+      { arg_name= arg_name ^":";
+        ml_type= "bool";
+        from_ml= arg_name;
+        at_call= Printf.sprintf "Bool_val(%s)" arg_name;
         prev_conv= "" }
   | "cpVect", "" ->
       { arg_name= arg_name ^":";
@@ -126,7 +140,7 @@ let prepare_arg ((arg_type, pointer), arg_name) =
     %s.y = Double_field(ml_%s,1);\n"
     arg_name arg_name arg_name arg_name arg_name; }
   | _,_ ->
-      failwith(Printf.sprintf "argument (%s) %s" arg_type arg_name)
+      failwith(Printf.sprintf "TODO: argument from ML to C (%s) %s" arg_type arg_name)
 ;;
 
 
@@ -170,6 +184,12 @@ let get_c_return func_type =
   | "void" -> ("", "", "return Val_unit;")
   | "cpConstraint *" ->
       ("", "cpConstraint *joint_constr = ", "return (value) joint_constr;")
+  | "cpBool" ->
+      ("", "cpBool _ret = ", "return Val_bool(_ret);")
+  | "int" ->
+      ("", "int _ret = ", "return Val_long(_ret);")
+  | "cpFloat" ->
+      ("", "cpFloat _ret = ", "return caml_copy_double(_ret);")
   | "cpVect" ->
       let mem_gc = Printf.sprintf "
     CAMLparam0();
@@ -186,7 +206,7 @@ let get_c_return func_type =
       in
       (mem_gc, func_return, return_to_ml)
   | _ ->
-      failwith(Printf.sprintf "C return type TOD0: '%s'" func_type)
+      failwith(Printf.sprintf "C return type TODO: '%s'" func_type)
 ;;
 
 
@@ -195,8 +215,11 @@ let get_ml_return func_type =
   | "void" -> ("unit")
   | "cpConstraint *" -> ("cpConstraint")
   | "cpVect" -> ("cpVect")
+  | "cpBool" -> ("bool")
+  | "cpFloat" -> ("float")
+  | "int" -> ("int")
   | _ ->
-      failwith(Printf.sprintf "ML return type TOD0: '%s'" func_type)
+      failwith(Printf.sprintf "ML return type TODO: '%s'" func_type)
 ;;
 
 
@@ -278,6 +301,8 @@ let there_is_arg arg =
 
 
 let () =
+  if there_is_arg "--gen-c" then
+    print_endline "#include \"wrap_chipmunk.h\"";
   try
     while true do
       let line = input_line stdin in

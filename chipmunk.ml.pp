@@ -1,23 +1,26 @@
 (* {{{ COPYING *(
 
-  +-----------------------------------------------------------------------+
-  |  This file is part of a binding for OCaml to the Chipmunk library.    |
-  +-----------------------------------------------------------------------+
-  |  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>   |
-  +-----------------------------------------------------------------------+
-  |  This program is free software: you can redistribute it and/or        |
-  |  modify it under the terms of the GNU General Public License          |
-  |  as published by the Free Software Foundation, either version 3       |
-  |  of the License, or (at your option) any later version.               |
-  |                                                                       |
-  |  This program is distributed in the hope that it will be useful,      |
-  |  but WITHOUT ANY WARRANTY; without even the implied warranty of       |
-  |  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
-  |  GNU General Public License for more details.                         |
-  |                                                                       |
-  |  You should have received a copy of the GNU General Public License    |
-  |  along with this program.  If not, see <http://www.gnu.org/licenses/> |
-  +-----------------------------------------------------------------------+
+  This file is part of a binding for OCaml to the Chipmunk library.
+
+  Copyright (C) 2008  Florent Monnier  <monnier.florent(_)gmail.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a
+  copy of this software and associated documentation files (the "Software"),
+  to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+  sell copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  The Software is provided "as is", without warranty of any kind, express or
+  implied, including but not limited to the warranties of merchantability,
+  fitness for a particular purpose and noninfringement. In no event shall
+  the authors or copyright holders be liable for any claim, damages or other
+  liability, whether in an action of contract, tort or otherwise, arising
+  from, out of or in connection with the software or the use or other dealings
+  in the Software.
 
 )* }}} *)
 
@@ -25,7 +28,7 @@
 
 (** Chipmunk Game Dynamics. Provides fast, easy to use, robust physics. *)
 
-(** {{:http://files.slembcke.net/chipmunk/chipmunk-docs.html}
+(** {{:http://chipmunk-physics.net/documentation.php}
     Officical documentation of Chipmunk} *)
 
 (* {{{ Low Level module *)
@@ -34,23 +37,15 @@ module Low_level = struct
 
 external cpInitChipmunk: unit -> unit = "ml_cpInitChipmunk"
 
-external set_cp_collision_slop: float -> unit = "ml_set_cp_collision_slop"
-external get_cp_collision_slop: unit -> float = "ml_get_cp_collision_slop"
-
-external set_cp_bias_coef: float -> unit = "ml_set_cp_bias_coef"
-external get_cp_bias_coef: unit -> float = "ml_get_cp_bias_coef"
-
-external set_cp_constraint_bias_coef: float -> unit = "ml_set_cp_constraint_bias_coef"
-external get_cp_constraint_bias_coef: unit -> float = "ml_get_cp_constraint_bias_coef"
-
-external set_cp_contact_persistence: int -> unit = "ml_set_cp_contact_persistence"
-external get_cp_contact_persistence: unit -> int = "ml_get_cp_contact_persistence"
+external get_compile_version: unit -> int * int * int = "get_chipmunk_compile_version"
 
 
 type cpVect = {cp_x:float; cp_y:float}
 
 external cpMomentForCircle: m:float -> r1:float -> r2:float -> offset:cpVect -> float = "ml_cpMomentForCircle"
 external cpMomentForPoly: m:float -> verts:cpVect array -> offset:cpVect -> float = "ml_cpMomentForPoly"
+
+external cpAreaForPoly: verts:cpVect array -> float = "ml_cpAreaForPoly"
 
 
 (** {4 Chipmunk Vectors} *)
@@ -172,7 +167,9 @@ type cpShapeType =
   | CP_POLY_SHAPE
   | CP_NUM_SHAPES
 
+(*
 external cpShapeGetType: shape:cpShape -> cpShapeType = "ml_cpShapeGetType"
+*)
 
 
 (** Debug *)
@@ -185,9 +182,9 @@ type cpBB
 external cpBBNew: l:float -> b:float -> r:float -> t:float -> cpBB = "ml_cpBBNew"
 external cpBBFree: bb:cpBB -> unit = "ml_cpBBFree"
 
-external cpBBintersects: a:cpBB -> b:cpBB -> bool = "ml_cpBBintersects"
-external cpBBcontainsBB: bb:cpBB -> other:cpBB -> bool = "ml_cpBBcontainsBB"
-external cpBBcontainsVect: bb:cpBB -> v:cpVect -> bool = "ml_cpBBcontainsVect"
+external cpBBIntersects: a:cpBB -> b:cpBB -> bool = "ml_cpBBIntersects"
+external cpBBContainsBB: bb:cpBB -> other:cpBB -> bool = "ml_cpBBContainsBB"
+external cpBBContainsVect: bb:cpBB -> v:cpVect -> bool = "ml_cpBBContainsVect"
 
 external cpBBClampVect: bb:cpBB -> v:cpVect -> cpVect = "ml_cpBBClampVect"
 external cpBBWrapVect: bb:cpBB -> v:cpVect -> cpVect = "ml_cpBBWrapVect"
@@ -229,12 +226,9 @@ type cpContact
 
 type cpArbiter
 
-external cpSpaceGetArbiters: space:cpSpace -> cpArbiter array = "ml_cpSpaceGetArbiters"
-
-external cpArbiterGetContacts: arbiter:cpArbiter -> cpContact array = "ml_cpArbiterGetContacts"
-
 external cpArbiterGetShapePA: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapePA"
 external cpArbiterGetShapePB: arbiter:cpArbiter -> cpShape = "ml_cpArbiterGetShapePB"
+external cpArbiterGetShapes: arbiter:cpArbiter -> cpShape * cpShape = "ml_cpArbiterGetShapes"
 
 
 (** {5 Generated Part} *)
@@ -254,33 +248,6 @@ end
 module OO :
   sig
     val init_chipmunk : unit -> unit
-    val set_bias_coef : float -> unit
-    val get_bias_coef : unit -> float
-(**
-    The amount of penetration to reduce in each step.
-    Values should range from 0.0 to 1.0.
-    Setting 0.0 effectively disables penetration resolution.
-    Setting 1.0 will try to resolve the penetration in a single step (not recommended).
-    Using large values will eliminate penetration in fewer steps, but can cause vibration.
-    defaults to 0.1.
-*)
-    val set_collision_slop : float -> unit
-    val get_collision_slop : unit -> float
-(** The maximum allowed penetration distance.  Setting this to zero will work
-    just fine, but using a small positive amount will help prevent oscillating
-    contacts. defaults to 0.1. *)
-    val set_contact_persistence : int -> unit
-    val get_contact_persistence : unit -> int
-(**
-    This determines how long contacts should persist. This number should be fairly
-    small as the cached contacts will only be close for a short time.
-    cp_contact_persistence defaults to 3 as it is large enough to help prevent
-    oscillating contacts, but doesn't allow stale contact information to be used. *)
-    val set_joint_bias_coef : float -> unit
-    val get_joint_bias_coef : unit -> float
-(**
-    Similar to cp_bias_coef, but for joints. Defaults to 0.1. In the future, joints
-    might have their own bias coefficient instead. *)
     val moment_for_circle :
       m:float -> r1:float -> r2:float -> offset:Low_level.cpVect -> float
 (** Calculate the moment of inertia for a circle with the given mass, inner and
@@ -291,8 +258,6 @@ module OO :
 (** Calculate the moment of inertia for a polygon with the given mass, vertexes,
     and offset. verts should be an array of cpVect with a counterclockwise
     winding, offset should be a cpVect. *)
-    val get_arbiter_contacts :
-      arbiter:Low_level.cpArbiter -> Low_level.cpContact array
     class virtual cp_body_virt :
       Low_level.cpBody ->
       object
@@ -304,7 +269,6 @@ module OO :
         method virtual body : Low_level.cpBody
         method virtual free : unit
         method virtual get_a_vel : float
-        method virtual get_a_vel_bias : float
         method virtual get_angle : float
         method virtual get_force : Low_level.cpVect
         method virtual get_mass : float
@@ -315,11 +279,9 @@ module OO :
         method virtual get_rot : Low_level.cpVect
         method virtual get_torque : float
         method virtual get_vel : Low_level.cpVect
-        method virtual get_vel_bias : Low_level.cpVect
         method virtual local2world : v:Low_level.cpVect -> Low_level.cpVect
         method virtual reset_forces : unit
         method virtual set_a_vel : w:float -> unit
-        method virtual set_a_vel_bias : w_bias:float -> unit
         method virtual set_angle : a:float -> unit
         method virtual set_force : f:Low_level.cpVect -> unit
         method virtual set_mass : m:float -> unit
@@ -327,13 +289,13 @@ module OO :
         method virtual set_moment : i:float -> unit
         method virtual set_moment_inverse : i_inv:float -> unit
         method virtual set_pos : p:Low_level.cpVect -> unit
+        (*
         method virtual set_rot : rot:Low_level.cpVect -> unit
+        *)
         method virtual set_vel_lim     : v_limit:float -> unit
         method virtual set_ang_vel_lim : w_limit:float -> unit
         method virtual set_torque : t:float -> unit
         method virtual set_vel : v:Low_level.cpVect -> unit
-        method virtual set_vel_bias : v_bias:Low_level.cpVect -> unit
-        method virtual slew : pos:Low_level.cpVect -> dt:float -> unit
         method virtual update_position : dt:float -> unit
         method virtual update_velocity :
           gravity:Low_level.cpVect -> damping:float -> dt:float -> unit
@@ -350,7 +312,6 @@ module OO :
         method body : Low_level.cpBody
         method free : unit
         method get_a_vel : float
-        method get_a_vel_bias : float
         method get_angle : float
         method get_force : Low_level.cpVect
         method get_mass : float
@@ -361,11 +322,9 @@ module OO :
         method get_rot : Low_level.cpVect
         method get_torque : float
         method get_vel : Low_level.cpVect
-        method get_vel_bias : Low_level.cpVect
         method local2world : v:Low_level.cpVect -> Low_level.cpVect
         method reset_forces : unit
         method set_a_vel : w:float -> unit
-        method set_a_vel_bias : w_bias:float -> unit
         method set_angle : a:float -> unit
         method set_force : f:Low_level.cpVect -> unit
         method set_mass : m:float -> unit
@@ -373,13 +332,13 @@ module OO :
         method set_moment : i:float -> unit
         method set_moment_inverse : i_inv:float -> unit
         method set_pos : p:Low_level.cpVect -> unit
+        (*
         method set_rot : rot:Low_level.cpVect -> unit
+        *)
         method set_vel_lim     : v_limit:float -> unit
         method set_ang_vel_lim : w_limit:float -> unit
         method set_torque : t:float -> unit
         method set_vel : v:Low_level.cpVect -> unit
-        method set_vel_bias : v_bias:Low_level.cpVect -> unit
-        method slew : pos:Low_level.cpVect -> dt:float -> unit
         method update_position : dt:float -> unit
         method update_velocity :
           gravity:Low_level.cpVect -> damping:float -> dt:float -> unit
@@ -486,15 +445,16 @@ module OO :
         method virtual get_elasticity : float
         method virtual get_friction : float
         method virtual get_group : int
-        method virtual get_hashid : int
         method virtual get_layers : int
         method virtual get_poly_shape : cp_poly_shape
         method virtual get_segment_shape : cp_segment_shape
         method virtual get_surface_vel : Low_level.cpVect
+        (*
         method virtual is_circle_shape : bool
         method virtual is_poly_shape : bool
         method virtual is_segment_shape : bool
         method virtual kind : Low_level.cpShapeType
+        *)
         method virtual set_collision_type : collision_type:int -> unit
         method virtual set_elasticity : e:float -> unit
         method virtual set_friction : u:float -> unit
@@ -520,17 +480,17 @@ module OO :
         method get_elasticity : float
         method get_friction : float
         method get_group : int
-        method get_hashid : int
-    (** Unique id used as the hash value. *)
         method get_layers : int
         method get_poly_shape : cp_poly_shape
         method get_segment_shape : cp_segment_shape
         method get_surface_vel : Low_level.cpVect
     (** Surface velocity used when solving for friction. *)
+        (*
         method is_circle_shape : bool
         method is_poly_shape : bool
         method is_segment_shape : bool
         method kind : Low_level.cpShapeType
+        *)
         method set_collision_type : collision_type:int -> unit
     (** User defined collision type for the shape. *)
         method set_elasticity : e:float -> unit
@@ -555,38 +515,17 @@ module OO :
         to [space#step]. *)
         method add_static_shape : shape:cp_shape_virt -> unit
         method add_constraint : constr:Low_level.cpConstraint -> unit
-    (** Add the given shape to the space's static spatial hash. Static shapes are
-        only rehashed when [space#rehash_static] is called, so they should not move. *)
+    (** Add the given shape to the space's static spatial hash. *)
         method free : unit
-        method free_children : unit
-        method get_arbiters : Low_level.cpArbiter array
         method get_damping : float
         method get_gravity : Low_level.cpVect
         method get_iterations : int
-        method get_stamp : int
-        method rehash_static : unit
-    (** Rehash the static spatial hash. *)
         method remove_body : body:cp_body_virt -> unit
         method remove_shape : shape:cp_shape_virt -> unit
         method remove_static_shape : shape:cp_shape_virt -> unit
         method remove_constraint : constr:Low_level.cpConstraint -> unit
-        method resize_active_hash : dim:float -> count:int -> unit
-        method resize_static_hash : dim:float -> count:int -> unit
-    (**
-        The spatial hashes used by Chipmunk's collision detection are fairly size
-        sensitive. dim is the size of the hash cells. Setting dim to the average
-        objects size is likely to give the best performance.
-
-        count is the suggested minimum number of cells in the hash table. Bigger is
-        better, but only to a point. Setting count to ~10x the number of objects in
-        the hash is probably a good starting point.
-
-        By default, dim is 100.0, and count is 1000.
-    *)
         method set_damping : damping:float -> unit
     (** The amount of damping to apply to the system when updating. *)
-        method set_elastic_iterations : elasticIterations:int -> unit
-    (** Number of iterations to use in the impulse solver to solve elastic collisions. *)
         method set_gravity : gravity:Low_level.cpVect -> unit
     (** The amount of gravity in the system. *)
         method set_iterations : iterations:int -> unit
@@ -605,10 +544,6 @@ module OO :
 
       The number of iterations, and the size of the time step determine the quality of
       the simulation. More iterations, or smaller time steps increase the quality.
-
-      Because static shapes are only rehashed when you request it, it's possible to use
-      a much higher count argument to [space#resize_active_hash] than to [space#resize_static_hash].
-      Doing so will use more memory though.
     *)
       end
 
@@ -636,38 +571,6 @@ open Low_level
 
 let init_chipmunk = cpInitChipmunk ;;
 
-let set_bias_coef = set_cp_bias_coef ;;
-let get_bias_coef = get_cp_bias_coef ;;
-(**
-    The amount of penetration to reduce in each step.
-    Values should range from 0.0 to 1.0.
-    Setting 0.0 effectively disables penetration resolution.
-    Setting 1.0 will try to resolve the penetration in a single step (not recommended).
-    Using large values will eliminate penetration in fewer steps, but can cause vibration.
-    defaults to 0.1.
-*)
-
-let set_collision_slop = set_cp_collision_slop ;;
-let get_collision_slop = get_cp_collision_slop ;;
-(** The maximum allowed penetration distance.  Setting this to zero will work
-    just fine, but using a small positive amount will help prevent oscillating
-    contacts. defaults to 0.1. *)
-
-let set_contact_persistence = set_cp_contact_persistence ;;
-let get_contact_persistence = get_cp_contact_persistence ;;
-(**
-    This determines how long contacts should persist. This number should be fairly
-    small as the cached contacts will only be close for a short time.
-    cp_contact_persistence defaults to 3 as it is large enough to help prevent
-    oscillating contacts, but doesn't allow stale contact information to be used. *)
-
-let set_joint_bias_coef = set_cp_constraint_bias_coef ;;
-let get_joint_bias_coef = get_cp_constraint_bias_coef ;;
-(**
-    Similar to cp_bias_coef, but for joints. Defaults to 0.1. In the future, joints
-    might have their own bias coefficient instead. *)
-
-
 let moment_for_circle = cpMomentForCircle ;;
 (** Calculate the moment of inertia for a circle with the given mass, inner and
     outer radii, and offset. *)
@@ -677,7 +580,6 @@ let moment_for_poly = cpMomentForPoly ;;
     and offset. verts should be an array of cpVect with a counterclockwise
     winding, offset should be a cpVect. *)
 
-let get_arbiter_contacts = cpArbiterGetContacts ;;
 
 (* {{{ Body *)
 
@@ -691,7 +593,6 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual body : Low_level.cpBody
     method virtual free : unit
     method virtual get_a_vel : float
-    method virtual get_a_vel_bias : float
     method virtual get_angle : float
     method virtual get_force : Low_level.cpVect
     method virtual get_mass : float
@@ -702,11 +603,9 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual get_rot : Low_level.cpVect
     method virtual get_torque : float
     method virtual get_vel : Low_level.cpVect
-    method virtual get_vel_bias : Low_level.cpVect
     method virtual local2world : v:Low_level.cpVect -> Low_level.cpVect
     method virtual reset_forces : unit
     method virtual set_a_vel : w:float -> unit
-    method virtual set_a_vel_bias : w_bias:float -> unit
     method virtual set_angle : a:float -> unit
     method virtual set_force : f:Low_level.cpVect -> unit
     method virtual set_mass : m:float -> unit
@@ -714,13 +613,13 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual set_moment : i:float -> unit
     method virtual set_moment_inverse : i_inv:float -> unit
     method virtual set_pos : p:Low_level.cpVect -> unit
+    (*
     method virtual set_rot : rot:Low_level.cpVect -> unit
+    *)
     method virtual set_vel_lim     : v_limit:float -> unit
     method virtual set_ang_vel_lim : w_limit:float -> unit
     method virtual set_torque : t:float -> unit
     method virtual set_vel : v:Low_level.cpVect -> unit
-    method virtual set_vel_bias : v_bias:Low_level.cpVect -> unit
-    method virtual slew : pos:Low_level.cpVect -> dt:float -> unit
     method virtual update_position : dt:float -> unit
     method virtual update_velocity : gravity:Low_level.cpVect -> damping:float -> dt:float -> unit
     method virtual world2local : v:Low_level.cpVect -> Low_level.cpVect
@@ -736,7 +635,6 @@ class cp_body ~m ~i =
 
     method free = cpBodyFree body
 
-    method slew               = cpBodySlew ~body
     method update_velocity    = cpBodyUpdateVelocity ~body
     method update_position    = cpBodyUpdatePosition ~body
     method local2world        = cpBodyLocal2World ~body
@@ -752,12 +650,12 @@ class cp_body ~m ~i =
     method set_pos            = cpBodySetPos ~body
     method set_vel            = cpBodySetVel ~body
     method set_force          = cpBodySetForce ~body
-    method set_vel_bias       = cpBodySetVelBias ~body
     method set_angle          = cpBodySetAngle ~body
-    method set_a_vel          = cpBodySetAVel ~body
+    method set_a_vel          = cpBodySetAngVel ~body
     method set_torque         = cpBodySetTorque ~body
-    method set_a_vel_bias     = cpBodySetAVelBias ~body
+    (*
     method set_rot            = cpBodySetRot ~body
+    *)
     method set_vel_lim        = cpBodySetVelLim ~body
     method set_ang_vel_lim    = cpBodySetAngVelLim ~body
     method get_mass           = cpBodyGetMass ~body
@@ -767,11 +665,9 @@ class cp_body ~m ~i =
     method get_pos            = cpBodyGetPos ~body
     method get_vel            = cpBodyGetVel ~body
     method get_force          = cpBodyGetForce ~body
-    method get_vel_bias       = cpBodyGetVelBias ~body
     method get_angle          = cpBodyGetAngle ~body
-    method get_a_vel          = cpBodyGetAVel ~body
+    method get_a_vel          = cpBodyGetAngVel ~body
     method get_torque         = cpBodyGetTorque ~body
-    method get_a_vel_bias     = cpBodyGetAVelBias ~body
     method get_rot            = cpBodyGetRot ~body
   end
 ;;
@@ -785,7 +681,6 @@ let to_cp_body ~body =
 
     method free = cpBodyFree body
 
-    method slew               = cpBodySlew ~body
     method update_velocity    = cpBodyUpdateVelocity ~body
     method update_position    = cpBodyUpdatePosition ~body
     method local2world        = cpBodyLocal2World ~body
@@ -801,12 +696,12 @@ let to_cp_body ~body =
     method set_pos            = cpBodySetPos ~body
     method set_vel            = cpBodySetVel ~body
     method set_force          = cpBodySetForce ~body
-    method set_vel_bias       = cpBodySetVelBias ~body
     method set_angle          = cpBodySetAngle ~body
-    method set_a_vel          = cpBodySetAVel ~body
+    method set_a_vel          = cpBodySetAngVel ~body
     method set_torque         = cpBodySetTorque ~body
-    method set_a_vel_bias     = cpBodySetAVelBias ~body
+    (*
     method set_rot            = cpBodySetRot ~body
+    *)
     method set_vel_lim        = cpBodySetVelLim ~body
     method set_ang_vel_lim    = cpBodySetAngVelLim ~body
     method get_mass           = cpBodyGetMass ~body
@@ -816,11 +711,9 @@ let to_cp_body ~body =
     method get_pos            = cpBodyGetPos ~body
     method get_vel            = cpBodyGetVel ~body
     method get_force          = cpBodyGetForce ~body
-    method get_vel_bias       = cpBodyGetVelBias ~body
     method get_angle          = cpBodyGetAngle ~body
-    method get_a_vel          = cpBodyGetAVel ~body
+    method get_a_vel          = cpBodyGetAngVel ~body
     method get_torque         = cpBodyGetTorque ~body
-    method get_a_vel_bias     = cpBodyGetAVelBias ~body
     method get_rot            = cpBodyGetRot ~body
   end
 ;;
@@ -1031,7 +924,9 @@ class cp_circle_shape ~shape =
   object
     val circle_shape =
       let shape = shape#shape in
+      (*
       if cpShapeGetType ~shape <> CP_CIRCLE_SHAPE then raise Wrong_shape_kind;
+      *)
       cpCircleShape_of_cpShape ~shape
 
     method set_center = cpCircleShapeSetCenter ~circle_shape
@@ -1046,7 +941,9 @@ class cp_segment_shape ~shape =
   object
     val segment_shape =
       let shape = shape#shape in
+      (*
       if cpShapeGetType ~shape <> CP_SEGMENT_SHAPE then raise Wrong_shape_kind;
+      *)
       cpSegmentShape_of_cpShape ~shape
 
     method set_a      = cpSegmentShapeSetA ~segment_shape
@@ -1071,7 +968,9 @@ class cp_poly_shape ~shape =
   object
     val poly =
       let shape = shape#shape in
+      (*
       if cpShapeGetType ~shape <> CP_POLY_SHAPE then raise Wrong_shape_kind;
+      *)
       cpPolyShape_of_cpShape ~shape
 
     method get_num_verts = cpPolyShapeGetNumVerts ~poly
@@ -1097,10 +996,12 @@ class virtual cp_shape_virt (_shape:Low_level.cpShape) =
     method virtual get_segment_shape : cp_segment_shape
 
     method virtual get_surface_vel : Low_level.cpVect
+    (*
     method virtual is_circle_shape : bool
     method virtual is_poly_shape : bool
     method virtual is_segment_shape : bool
     method virtual kind : Low_level.cpShapeType
+    *)
     method virtual set_elasticity : e:float -> unit
     method virtual set_friction : u:float -> unit
     method virtual set_surface_vel : surface_vel:Low_level.cpVect -> unit
@@ -1113,8 +1014,6 @@ class virtual cp_shape_virt (_shape:Low_level.cpShape) =
     method virtual set_collision_type : collision_type:int -> unit
     method virtual set_group : group:int -> unit
     method virtual set_layers : layers:int -> unit
-
-    method virtual get_hashid : int
   end
 (* }}} *)
 
@@ -1141,16 +1040,20 @@ class cp_shape ~body:(_body :cp_body_virt) ~kind:_kind =
     method free = cpShapeFree ~shape
     method shape = shape
 
+    (*
     method kind = cpShapeGetType ~shape
+    *)
     method body = _body
 
     method get_circle_shape  = new cp_circle_shape ~shape:self
     method get_segment_shape = new cp_segment_shape ~shape:self
     method get_poly_shape    = new cp_poly_shape ~shape:self
 
+    (*
     method is_circle_shape  = (self#kind = CP_CIRCLE_SHAPE)
     method is_segment_shape = (self#kind = CP_SEGMENT_SHAPE)
     method is_poly_shape    = (self#kind = CP_POLY_SHAPE)
+    *)
 
     method get_elasticity = cpShapeGetElasticity ~shape
     method set_elasticity = cpShapeSetElasticity ~shape
@@ -1175,9 +1078,6 @@ class cp_shape ~body:(_body :cp_body_virt) ~kind:_kind =
     method get_layers = cpShapeGetLayers ~shape
     method set_layers = cpShapeSetLayers ~shape
     (** User defined layer bitmask for the shape. *)
-
-    method get_hashid = cpShapeGetHashID ~shape
-    (** Unique id used as the hash value. *)
   end
 
 
@@ -1188,16 +1088,20 @@ let to_cp_shape ~shape =
     method free = cpShapeFree ~shape
     method shape = shape
 
+    (*
     method kind = cpShapeGetType ~shape
+    *)
     method body = to_cp_body (cpShapeGetBody ~shape)
 
     method get_circle_shape  = new cp_circle_shape ~shape:self
     method get_segment_shape = new cp_segment_shape ~shape:self
     method get_poly_shape    = new cp_poly_shape ~shape:self
 
+    (*
     method is_circle_shape  = (self#kind = CP_CIRCLE_SHAPE)
     method is_segment_shape = (self#kind = CP_SEGMENT_SHAPE)
     method is_poly_shape    = (self#kind = CP_POLY_SHAPE)
+    *)
 
     method set_elasticity = cpShapeSetElasticity ~shape
     method set_friction   = cpShapeSetFriction ~shape
@@ -1215,8 +1119,6 @@ let to_cp_shape ~shape =
 
     method get_layers = cpShapeGetLayers ~shape
     method set_layers = cpShapeSetLayers ~shape
-
-    method get_hashid = cpShapeGetHashID ~shape
   end
 ;;
 
@@ -1228,7 +1130,6 @@ class cp_space =
     val space = cpSpaceNew()
 
     method free = cpSpaceFree ~space;
-    method free_children = cpSpaceFreeChildren ~space;
 
     method space = space
 
@@ -1240,8 +1141,7 @@ class cp_space =
         to [space#step]. *)
 
     method add_static_shape ~(shape:cp_shape_virt) = cpSpaceAddStaticShape ~space ~shape:shape#shape
-    (** Add the given shape to the space's static spatial hash. Static shapes are
-        only rehashed when [space#rehash_static] is called, so they should not move. *)
+    (** Add the given shape to the space's static spatial hash. *)
 
     method remove_shape ~(shape:cp_shape_virt) = cpSpaceRemoveShape ~space ~shape:shape#shape
     method remove_static_shape ~(shape:cp_shape_virt) = cpSpaceRemoveStaticShape ~space ~shape:shape#shape
@@ -1249,23 +1149,6 @@ class cp_space =
 
     method add_constraint ~(constr:cpConstraint) = cpSpaceAddConstraint ~space ~constr
     method remove_constraint ~(constr:cpConstraint) = cpSpaceRemoveConstraint ~space ~constr
-
-    method resize_static_hash  = cpSpaceResizeStaticHash ~space
-    method resize_active_hash  = cpSpaceResizeActiveHash ~space
-    (**
-        The spatial hashes used by Chipmunk's collision detection are fairly size
-        sensitive. dim is the size of the hash cells. Setting dim to the average
-        objects size is likely to give the best performance.
-
-        count is the suggested minimum number of cells in the hash table. Bigger is
-        better, but only to a point. Setting count to ~10x the number of objects in
-        the hash is probably a good starting point.
-
-        By default, dim is 100.0, and count is 1000.
-    *)
-
-    method rehash_static = cpSpaceRehashStatic ~space
-    (** Rehash the static spatial hash. *)
 
     method step = cpSpaceStep ~space
     (** Move the space forward by dt seconds. Using a fixed size time step is
@@ -1275,9 +1158,6 @@ class cp_space =
     method set_iterations = cpSpaceSetIterations ~space
     (** The number of iterations to use when solving constraints. (collisions and joints) *)
 
-    method set_elastic_iterations = cpSpaceSetElasticIterations ~space
-    (** Number of iterations to use in the impulse solver to solve elastic collisions. *)
-
     method get_gravity    = cpSpaceGetGravity ~space
     method set_gravity    = cpSpaceSetGravity ~space
     (** The amount of gravity in the system. *)
@@ -1285,12 +1165,6 @@ class cp_space =
     method get_damping    = cpSpaceGetDamping ~space
     method set_damping    = cpSpaceSetDamping ~space
     (** The amount of damping to apply to the system when updating. *)
-
-    (*
-    method get_bodies = cpSpaceGetBodies ~space
-    *)
-    method get_arbiters = cpSpaceGetArbiters ~space
-    method get_stamp = cpSpaceGetStamp ~space
 
     (**
       {b Notes:}
@@ -1301,10 +1175,6 @@ class cp_space =
 
       The number of iterations, and the size of the time step determine the quality of
       the simulation. More iterations, or smaller time steps increase the quality.
-
-      Because static shapes are only rehashed when you request it, it's possible to use
-      a much higher count argument to [space#resize_active_hash] than to [space#resize_static_hash].
-      Doing so will use more memory though.
     *)
   end
 ;;
@@ -1322,6 +1192,5 @@ end
 #endif
 
 
-(* fdm=marker *)
-(* vim: sw=2 sts=2 ts=2 et filetype=ocaml
+(* vim: sw=2 sts=2 ts=2 et filetype=ocaml fdm=marker
  *)
