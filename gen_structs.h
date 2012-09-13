@@ -16,6 +16,9 @@ cpBody body {
         AVelBias( float w_bias ),
 
         Rot( cpVect rot ),
+
+        VelLim( float v_limit ),
+        AngVelLim( float w_limit ),
 };
 
 

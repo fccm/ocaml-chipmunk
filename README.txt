@@ -3,7 +3,9 @@
   Chipmunk 2D physics library:
     http://code.google.com/p/chipmunk-physics/
 
-  This bindings was tested with Chipmunk version 5.2.0
+  This version of the bindings was tested with Chipmunk
+  version 5.3.4 (Thank to Arlen Cuss for the update
+  from 5.2.0 to 5.3.4)
 
   The Makefile assuses Chipmunk is installed in
     /usr/(local)/lib/libchipmunk.so

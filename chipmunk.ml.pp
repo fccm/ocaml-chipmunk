@@ -328,6 +328,8 @@ module OO :
         method virtual set_moment_inverse : i_inv:float -> unit
         method virtual set_pos : p:Low_level.cpVect -> unit
         method virtual set_rot : rot:Low_level.cpVect -> unit
+        method virtual set_vel_lim     : v_limit:float -> unit
+        method virtual set_ang_vel_lim : w_limit:float -> unit
         method virtual set_torque : t:float -> unit
         method virtual set_vel : v:Low_level.cpVect -> unit
         method virtual set_vel_bias : v_bias:Low_level.cpVect -> unit
@@ -372,6 +374,8 @@ module OO :
         method set_moment_inverse : i_inv:float -> unit
         method set_pos : p:Low_level.cpVect -> unit
         method set_rot : rot:Low_level.cpVect -> unit
+        method set_vel_lim     : v_limit:float -> unit
+        method set_ang_vel_lim : w_limit:float -> unit
         method set_torque : t:float -> unit
         method set_vel : v:Low_level.cpVect -> unit
         method set_vel_bias : v_bias:Low_level.cpVect -> unit
@@ -381,6 +385,7 @@ module OO :
           gravity:Low_level.cpVect -> damping:float -> dt:float -> unit
         method world2local : v:Low_level.cpVect -> Low_level.cpVect
       end
+
     val to_cp_body : body:Low_level.cpBody -> cp_body_virt
 
     exception Wrong_joint_kind
@@ -710,6 +715,8 @@ class virtual cp_body_virt (_body : Low_level.cpBody) =
     method virtual set_moment_inverse : i_inv:float -> unit
     method virtual set_pos : p:Low_level.cpVect -> unit
     method virtual set_rot : rot:Low_level.cpVect -> unit
+    method virtual set_vel_lim     : v_limit:float -> unit
+    method virtual set_ang_vel_lim : w_limit:float -> unit
     method virtual set_torque : t:float -> unit
     method virtual set_vel : v:Low_level.cpVect -> unit
     method virtual set_vel_bias : v_bias:Low_level.cpVect -> unit
@@ -751,7 +758,8 @@ class cp_body ~m ~i =
     method set_torque         = cpBodySetTorque ~body
     method set_a_vel_bias     = cpBodySetAVelBias ~body
     method set_rot            = cpBodySetRot ~body
-
+    method set_vel_lim        = cpBodySetVelLim ~body
+    method set_ang_vel_lim    = cpBodySetAngVelLim ~body
     method get_mass           = cpBodyGetMass ~body
     method get_mass_inverse   = cpBodyGetMassInverse ~body
     method get_moment         = cpBodyGetMoment ~body
@@ -799,7 +807,8 @@ let to_cp_body ~body =
     method set_torque         = cpBodySetTorque ~body
     method set_a_vel_bias     = cpBodySetAVelBias ~body
     method set_rot            = cpBodySetRot ~body
-
+    method set_vel_lim        = cpBodySetVelLim ~body
+    method set_ang_vel_lim    = cpBodySetAngVelLim ~body
     method get_mass           = cpBodyGetMass ~body
     method get_mass_inverse   = cpBodyGetMassInverse ~body
     method get_moment         = cpBodyGetMoment ~body
