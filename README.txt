@@ -40,8 +40,8 @@
     ocamlc -I +chipmunk chipmunk.cma foo.ml
 
   This binding is released under the terms of the
-  Expat/X11 licence. You can find the conditions of
-  this licence in the file:  LICENCE_MIT.txt
+  Expat/X11 license. You can find the conditions of
+  this license in the file:  LICENSE_MIT.txt
 
   Comments and feedbacks are wellcome, write to
     <monnier.florent(_)gmail.com>

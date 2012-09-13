@@ -211,9 +211,9 @@ $(P_DIR)/demos: $(DM_FILES)
 	if [ ! -d $@ ]; then mkdir -p $@; fi
 	cp  $^  $@/
 
-$(P_DIR): LICENCE_MIT.txt $(CP_FILES) $(P_DIR)/demos
+$(P_DIR): LICENSE_MIT.txt $(CP_FILES) $(P_DIR)/demos
 	mkdir -p $(P_DIR)
-	cp  LICENCE_MIT.txt  $(P_DIR)/
+	cp  LICENSE_MIT.txt  $(P_DIR)/
 	cp -f  $(CP_FILES)  $(P_DIR)/
 	sed -i $(P_DIR)/META -e "s:@VERSION@:$(VERSION):g"
 
