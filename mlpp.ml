@@ -105,7 +105,7 @@ let clip_slice ?(first=0) ?(last=Sys.max_string_length) s =
     (if (last<0) then len + last else last)
   in
   if i>=j || i=len
-  then String.create 0
+  then Bytes.to_string (Bytes.create 0)
   else String.sub s i (j-i)
 ;;
 
