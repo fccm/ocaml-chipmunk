@@ -21,7 +21,7 @@
 
   The demo riquire the OpenGL binding called glMLite,
   which can be found at:
-    http://www.linux-nantes.org/~fmonnier/OCaml/GL/
+    http://decapode314.free.fr/ocaml/GL/
 
   run 'make doc' to generate the interface ocamldoc
   documentation. Two interfaces are provided, a high
