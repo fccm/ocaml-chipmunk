@@ -1,0 +1,7 @@
+*.[oa]
+*.so
+*.cm[ioxat]
+*.cmx[as]
+*.cmake
+*.exe
+CMake*
