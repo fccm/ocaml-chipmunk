@@ -44,13 +44,16 @@ chipmunk.gen.ml: gen_funcs.h  generate_funcs.ml  generate_structs.ml  gen_struct
 	echo "(** {4 Structure Members Access} *)"         >> $@
 	ocaml generate_structs.ml --gen-ml < gen_structs.h >> $@
 
-wrap_chipmunk.o: wrap_chipmunk.c  wrap_chipmunk.gen.c
-	ocamlc -c -ccopt "-O3 -std=gnu99 -ffast-math" $<
+Chipmunk-6.1.5/src/libchipmunk.a:
+	( cd ./Chipmunk-6.1.5/ && cmake . && make chipmunk_static )
 
-dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o
+wrap_chipmunk.o: wrap_chipmunk.c  wrap_chipmunk.gen.c
+	ocamlc -c -ccopt "-I./Chipmunk-6.1.5/include -O3 -std=gnu99 -ffast-math" $<
+
+dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o \
+  Chipmunk-6.1.5/src/libchipmunk.a
 	ocamlmklib  \
-	    -L/usr/local/  \
-	    -L/usr/local/lib  \
+	    -L./Chipmunk-6.1.5/src/  \
 	    -o  _chipmunk_stubs  $<  \
 	    -ccopt -O3  -ccopt -std=gnu99  -ccopt -ffast-math  \
 	    -lchipmunk
@@ -63,7 +66,7 @@ dll_chipmunk_stubs.so  lib_chipmunk_stubs.a: wrap_chipmunk.o
 MLPP=./mlpp.exe
 
 $(MLPP): mlpp.ml
-	ocamlopt str.cmxa $< -o $@
+	ocamlopt -w -6 str.cmxa $< -o $@
 
 clean-mlpp:
 	rm -f $(MLPP)
@@ -87,27 +90,28 @@ chipmunk.cmi: chipmunk.mli
 
 # bytecode
 chipmunk.cmo: chipmunk.ml chipmunk.cmi
-	ocamlc -c $<
+	ocamlc -w -6 -c $<
 
 CUSTOM=-custom
 
-chipmunk.cma:  chipmunk.cmo  dll_chipmunk_stubs.so
+chipmunk.cma:  chipmunk.cmo  dll_chipmunk_stubs.so \
+  Chipmunk-6.1.5/src/libchipmunk.a
 	ocamlc -a  $(CUSTOM)  -o $@  $<  \
-	       -ccopt -L/usr/local/lib  \
+	       -ccopt -L./Chipmunk-6.1.5/src/  \
 	       -dllib dll_chipmunk_stubs.so  \
 	      -cclib -l_chipmunk_stubs  \
 	      -cclib -lchipmunk 
 
 # native
 chipmunk.cmx: chipmunk.ml chipmunk.cmi
-	ocamlopt -c $<
+	ocamlopt -w -6 -c $<
 
-chipmunk.cmxa  chipmunk.a:  chipmunk.cmx  dll_chipmunk_stubs.so
+chipmunk.cmxa  chipmunk.a:  chipmunk.cmx  dll_chipmunk_stubs.so \
+  Chipmunk-6.1.5/src/libchipmunk.a
 	ocamlopt -a  -o $@  $<  \
 	      -cclib -l_chipmunk_stubs  \
 	  -ccopt -O3  -ccopt -std=gnu99  -ccopt -ffast-math  \
-	  -ccopt -L/usr/local/  \
-	  -ccopt -L/usr/local/lib  \
+	  -ccopt -L./Chipmunk-6.1.5/src/  \
 	      -cclib -lchipmunk
 
 .PHONY: clean-doc clean clean-mlpp run-opt-demo test install
@@ -191,11 +195,12 @@ uninstall_findlib:  $(DIST_FILES)  $(SO_DIST_FILES) META
 
 # tar-ball
 
-VERSION=$(shell date --iso)
-P_DIR=OCaml-Chipmunk-$(VERSION)
+VERSION=0.04.2
+P_DIR=ocaml-chipmunk-$(VERSION)
 TARBALL=$(P_DIR).tgz
 
 snapshot release rel dist pack: $(TARBALL)
+
 
 CP_FILES= wrap_chipmunk.c  chipmunk.ml.pp  \
           wrap_chipmunk.h  \

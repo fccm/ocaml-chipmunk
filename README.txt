@@ -8,6 +8,7 @@
 
   This version of the bindings was tested with Chipmunk
   version 6.1.5 and OCaml version 4.07.1.
+
   Arlen Cuss contributed to the update from version 5.2.0
   to 5.3.4.
 
