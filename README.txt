@@ -12,14 +12,6 @@
   Arlen Cuss contributed to the update from version 5.2.0
   to 5.3.4.
 
-  The Makefile assumes Chipmunk is installed in
-    /usr/(local)/lib/libchipmunk.so
-  and that the header files are located in
-    /usr/(local)/include/chipmunk/
-
-  If these are in other (not compatible) directories,
-  edit the Makefile to fix the path.
-
   run 'make' to compile the binding, and 'make test'
   to launch the "moon buggy" demo.
 
