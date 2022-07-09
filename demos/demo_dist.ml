@@ -1119,7 +1119,8 @@ let glutStuff() =
   
   glutInitWindowSize 640 480;
   let last = string_of_int(Array.length init_funcs) in
-  ignore(glutCreateWindow("Press 1-"^last^" to switch demos"));
+  ignore(glutCreateWindow("Press 1 to " ^ last ^ " to switch demos"));
+  print_endline ("Press 1 to " ^ last ^ " to switch demos");
   
   initGL();
   
